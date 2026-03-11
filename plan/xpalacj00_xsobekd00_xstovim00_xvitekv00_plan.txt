@@ -1,0 +1,37 @@
+Systém pro správu verzí
+---
+
+Jako systém pro správu verzí byl zvolen git. 
+
+Pro jednodušší přístup k repositáři existuje zrcadlo repositáře hostované na platofrmě GitHub. Toto zrcadlo by mělo být synchronizováno s primárním repositářem každých 8 hodin (interval se může v budoucnu změnit, ale změny by měly být vždy synchronizovány nejméně jednou za den). Synchronizuje se pouze obsah samotného git repositáře, další funkce (jako issues a pull requesty) se nesynchronizují a jsou dostupné pouze na primárním serveru.
+
+Adresa zrcadla na GitHubu: https://github.com/vyPal/Sobkulacka
+
+Primární hosting se nachází na vlastním serveru. Repositář je soukromý a k přístupu je zapotřebí účet. Účet se zřizuje ve službě Sleep@FIT, jeden z možných způsobů založení účtu je přes tlačítko Login v pravém horním rohu na webovém rozhraní git serveru a následně zmáčknutím tlačítka "Login with Sleep@FIT" kde se po stisknutí nachází možnost registrace.
+
+Adresa serveru: https://git.sleepat.fit
+Adresa repositáře: https://git.sleepat.fit/SobekCo/Sobkulacka
+Adresa repositáře pro nakolování přes SSH: git@git.sleepat.fit:SobekCo/Sobkulacka.git
+
+Na platofrmě GitHub by k repositáři měl mít účet zmíněný v zadání přístup. V případě že tomu tak není nebo pro zažádání o přístup k primárnímu repositáři, prosím odešlete email na jednu z těchto adres:
+- vypal420@proton.me (Preferovaná)
+- xpalacj00@stud.fit.vutbr.cz (Kontroluji méně často, odpověď by mohla trvat až týden)
+- iam@vypal.me
+
+Kanály pro komunikaci
+---
+
+Oficiálním komunikačním kanálem pro členy týmu jsou poštovní holubové. Pokud není aktuánlě žádny dostupný, tak se záložním kanálem stává soukromá skupina na discordu.
+
+Dodatečná komunikace ke konkrétním změnám/problémům může také probáhat na webovém serveru kde je repositář hostovaný v záložkách Issues a Pull requests. Členům týmu je vysoce doporučeno alespoň jednou za den tento server zkotrolovat. Každý ze členů si ověří v nastavení osobního účtu že má zapnuté emailové notifikaci minimálně při zmínce.
+
+Pro zaručení že se nová zpráva dostane ke konkrétnímu členu týmu je možné člena "zmínit" napsáním do zprávy znak `@` následovaný uživatelským jménem člena na dané platofrmě.
+
+Každý člen týmu je povinnen po dobu trvání projektu alespoň jednou za den zkotrolovat nové zprávy ve skupině na aplikaci discord a ověření nových zpráv od git serveru v osobní emailové schránce použité při registraci.
+
+Verzování projektu
+---
+
+Obě primární části projektu (knihovna a uživatelské rozhraní) budou vždy sdílet stejnou verzi. Verzování bude probíhat podle standardu semver, dokumentace je dostupná na adrese https://semver.org
+
+Tagy v gitu budou ve formátu `vX.Y.Z` kde X, Y a Z reprezentují major, minor a patch verzi v tomto pořadí.
