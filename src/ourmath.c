@@ -22,8 +22,9 @@ m_state* m_init_state() {
 }
 
 void m_clear(m_state* state) {}
-double m_get_state(const m_state* state) {}
-m_err m_get_err(const m_state* state) {}
+void m_free_state(m_state* state) {}
+double m_get_state(const m_state* state) { return 0.0; }
+m_err m_get_err(const m_state* state) { return SUCESS; }
 void m_set_state(m_state* state, double value) {}
 void m_add(m_state* state, double value) {}
 void m_sub(m_state* state, double value) {}

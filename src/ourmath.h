@@ -45,6 +45,13 @@ m_state* m_init_state();
 void m_clear(m_state* state);
 
 /*
+ * @brief Frees the memory allocated for the state structure.
+ *
+ * @param state Pointer to the state structure to be freed.
+ */
+void m_free_state(m_state* state);
+
+/*
  * @brief Gets the current value from the state structure.
  *
  * @param state Pointer to the state structure.
