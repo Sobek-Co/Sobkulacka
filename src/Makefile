@@ -4,9 +4,9 @@ CC = gcc
 
 SRC = $(wildcard *.c)
 
-all : $(SRC)
+all :
 	mkdir -p ./build/
-	$(CC) -o ./build/main $(CFLAGS) $(LIBS) main.c
+	$(CC) -o ./build/main $(CFLAGS) $(LIBS) ourmath.c main.c
 
 pack :
 
