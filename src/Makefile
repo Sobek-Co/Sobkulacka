@@ -14,10 +14,9 @@ clean :
 	rm -r build/
 
 check_install :
-	@if ! pkg-config --exists check; then \
-		echo "Check library not found. Installing..."; \
-		sudo apt-get install -y check; \
-	fi
+	@if ! pkg-config --exists check; then
+		echo "Check library not found. Installing...";
+		sudo apt-get install -y check;
 
 test : check_install
 	mkdir -p ./build/
