@@ -19,7 +19,6 @@ pack :
 clean : 
 	rm -rf build/
 
-# Build and install check locally under build/check
 check-deps:
 	mkdir -p $(CHECK_SRC_DIR) $(CHECK_PREFIX)
 	@if [ ! -f $(CHECK_EXTRACT_DIR)/configure ]; then \
