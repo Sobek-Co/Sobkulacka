@@ -1,33 +1,41 @@
-// ourmath.c
+//======================================================================//
+// Purpose:     Math Library
+//
+// Authors:     David Sobek <xsobekd00@fit.vutbr.cz>
+// Date:        2026-03-15
+//======================================================================//
+/**
+ * @file ourmath.c
+ * @author David Sobek <xsobekd00@fit.vutbr.cz>
+ * 
+ * @brief Math Library.
+ */
+
 #include <stdlib.h>
 #include "ourmath.h"
 
 m_state* m_init_state() {
     m_state* state = (m_state*)malloc(sizeof(m_state));
-    if (state) {
-        state->current = 0.0;
-        state->error = SUCESS;
-    }
+    state->current = 0.0;
+    state->error = SUCESS;
     return state;
 }
 
 void m_clear(m_state* state) {
-    if (state) {
-        state->current = 0.0;
-        state->error = SUCESS;
-    }
+    state->current = 0.0;
+    state->error = SUCESS;
 }
 
 double m_get_state(const m_state* state) {
-    return state ? state->current : 0.0;
+    return state->current;
 }
 
 m_err m_get_err(const m_state* state) {
-    return state ? state->error : SUCESS;
+    return state->error;
 }
 
 void m_set_state(m_state* state, double value) {
-    if (state) state->current = value;
+    state->current = value;
 }
 
 void m_add(m_state* state, double value) { (void)state; (void)value; }
