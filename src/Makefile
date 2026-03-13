@@ -13,7 +13,13 @@ pack :
 clean : 
 	rm -r build/
 
-test :
+check_install :
+	@if ! pkg-config --exists check; then \
+		echo "Check library not found. Installing..."; \
+		sudo apt-get install -y check; \
+	fi
+
+test : check_install
 	mkdir -p ./build/
 	$(CC) -o ./build/test_program $(CFLAGS) ourmath.c test_ourmath.c -lcheck -lsubunit -pthread -lrt -lm
 	./build/test_program
@@ -25,4 +31,4 @@ run : all
 
 stddev : all
 
-help : 
+help :
