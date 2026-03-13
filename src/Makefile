@@ -1,49 +1,35 @@
-# Compiler and flags
-CC = gcc
-CFLAGS = -Wall -I.
 LIBS = -lm
-CHECK_LIBS = $(shell pkg-config --cflags --libs check)
+CFLAGS = -Wall
+CC = gcc
 
-# Source files
-SRC = $(wildcard *.c)
-MAIN_SRC = main.c
-TEST_SRC = test_ourmath.c
+# Only include main program sources, not tests
+SRC = main.c
 
-# Build directories
-BUILD_DIR = build
-BIN = $(BUILD_DIR)/main
-TEST_BIN = $(BUILD_DIR)/test_ourmath
+all: $(SRC)
+	mkdir -p ./build/
+	$(CC) -o ./build/main $(CFLAGS) $(LIBS) $(SRC)
 
-# Default target
-all: $(BIN)
-
-# Build main program
-$(BIN): $(SRC) ourmath.h
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $(MAIN_SRC) $(LIBS)
-
-# Build test program
-$(TEST_BIN): $(TEST_SRC) ourmath.h
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $(TEST_SRC) $(LIBS) $(CHECK_LIBS)
-
-# Run main program
-run: $(BIN)
-	./$(BIN)
+# Check library linking
+CHECK_LIBS = -lcheck -pthread -lrt -lm -lsubunit
 
 # Build and run tests
-test: $(TEST_BIN)
-	./$(TEST_BIN)
+test: ./build/test_ourmath
+	./build/test_ourmath
 
-# Clean build artifacts
-clean:
-	rm -rf $(BUILD_DIR)
+./build/test_ourmath: test_ourmath.c ourmath.h
+	mkdir -p ./build/
+	$(CC) $(CFLAGS) -o ./build/test_ourmath test_ourmath.c $(LIBS) $(CHECK_LIBS)
 
-# Help message
+pack :
+
+clean: 
+	rm -rf build/
+
+doc: all
+
+run: all
+	./build/main
+
+stddev: all
+
 help:
-	@echo "Makefile targets:"
-	@echo "  all       - build the main program"
-	@echo "  run       - run the main program"
-	@echo "  test      - build and run Check unit tests"
-	@echo "  clean     - remove build artifacts"
-	@echo "  help      - show this message"
