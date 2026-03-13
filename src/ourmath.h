@@ -33,9 +33,9 @@ typedef struct {
 /*
  * @brief Initializes the state structure.
  *
- * @param state Pointer to the state structure to be initialized.
+ * @return A pointer to the initialized state structure.
 */
-void m_init_state(m_state* state);
+m_state* m_init_state();
 
 /*
  * @brief Clears the state structure, resetting the current value to 0 and error status to SUCESS.
@@ -59,6 +59,14 @@ double m_get_state(const m_state* state);
  * @return The current error status.
  */
 m_err m_get_err(const m_state* state);
+
+/*
+ * @brief Sets the current value in the state structure.
+ *
+ * @param state Pointer to the state structure.
+ * @param value The value to be set.
+ */
+void m_set_state(m_state* state, double value);
 
 /*
  * @brief Adds a value to the current value in the state structure.
