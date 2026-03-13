@@ -132,30 +132,30 @@ void m_root(m_state* state, int value);
 void m_factorial(m_state* state);
 
 /*
- * @brief Calculates the sine of the current value in the state structure. Uses degrees.
+ * @brief Calculates the sine of the current value in the state structure.
  *
- * @param state Pointer to the state structure.
+ * @param state Pointer to the state structure. The value is interpreted in degrees.
  */
 void m_sin(m_state* state);
 
 /*
- * @brief Calculates the cosine of the current value in the state structure. Uses degrees.
+ * @brief Calculates the cosine of the current value in the state structure.
  *
- * @param state Pointer to the state structure.
+ * @param state Pointer to the state structure. The value is interpreted in degrees.
  */
 void m_cos(m_state* state);
 
 /*
- * @brief Calculates the tangent of the current value in the state structure. Uses degrees.
+ * @brief Calculates the tangent of the current value in the state structure.
  *
- * @param state Pointer to the state structure.
+ * @param state Pointer to the state structure. The value is interpreted in degrees.
  */
 void m_tg(m_state* state);
 
 /*
- * @brief Calculates the cotangent of the current value in the state structure. Uses degrees.
+ * @brief Calculates the cotangent of the current value in the state structure.
  *
- * @param state Pointer to the state structure.
+ * @param state Pointer to the state structure. The value is interpreted in degrees.
  */
 void m_cotg(m_state* state);
 
