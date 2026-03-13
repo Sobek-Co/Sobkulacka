@@ -6,14 +6,17 @@ SRC = $(wildcard *.c)
 
 all : $(SRC)
 	mkdir -p ./build/
-	$(CC) -o ./build/main $(CFLAGS) $(LIBS) $(SRC)
+	$(CC) -o ./build/main $(CFLAGS) $(LIBS) main.c
 
 pack :
 
 clean : 
 	rm -r build/
 
-test : all
+test :
+	mkdir -p ./build/
+	$(CC) -o ./build/test_program $(CFLAGS) ourmath.c test_ourmath.c -lcheck -lsubunit -pthread -lrt -lm
+	./build/test_program
 
 doc : all
 
