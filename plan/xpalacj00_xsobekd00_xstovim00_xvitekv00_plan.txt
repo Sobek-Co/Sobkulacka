@@ -35,3 +35,26 @@ Verzování projektu
 Obě primární části projektu (knihovna a uživatelské rozhraní) budou vždy sdílet stejnou verzi. Verzování bude probíhat podle standardu semver, dokumentace je dostupná na adrese https://semver.org
 
 Tagy v gitu budou ve formátu `vX.Y.Z` kde X, Y a Z reprezentují major, minor a patch verzi v tomto pořadí.
+
+Rozdělení projektu
+---
+
+Projekt jsme se rozhodli rozdělit na několik podúkolů a to následně:
+- Matematická knihovna a její testy
+- Program pro profiling
+- Grafická aplikace
+- Instalátor a odinstalátor
+
+Rozhodli jsme se neudělat striktní rozdělení práce jednotlivým členům týmu (kterýkoliv člen může příspívat do kterékoliv části), avšak jsme se rozhodli udělat skupiny, které se budou primárně věnovat konkrétním podúkolům a mít je "na starost". Skupiny jsou následující (Mohou se v budoucnu po domluvě změnit):
+- David Sobek, Vojtěch Vítek => Matematická knihovna a její testy, Program pro profiling
+- Jakub Palacký, Martin Šťovíček => Grafická aplikace, Instalátor a odinstalátor
+
+Na git serveru jsme taktéž implementovali systém "ochrany" větví, kde před každým merge commitem musí jeden z členů týmu (který není autorem dané větve) změny ověřit a schválit před tém než mohou být sloučeny do hlavní větve. Ověřování by zpravidla měl dělat člen týmu zodpovědného za danou část projektu. Člen který provedl ověření bude taktéž zaznamenán v zprávě merge commitu po sloučení do hlavní větve.
+
+Stanovené termíny
+---
+
+Ke stanovení termínů na konkrétní součásti projektu budeme využívat funkcí k e správě času ve webovém rozhraní našeho git serveru. Obecné termíny máme stanovené takto:
+- První preview verze (v0.0.1 - do týdne po odevzdání plánu, tedy 25.3.) - Základní funkcionalita hotova, primitivní zobrazení/interakce v GUI popřípadě TUI klientovi
+- První testovací verze (v0.1.0 - do 3 týdnů před odevzdáním práce, tedy 9.4.) - Knihovna by měla být blízko k hotovému stavu, začátek profilingu a práce na instalátoru, pokročilejší zobrazení/interakce v GUI, základní dokumentace
+- První stabilní verze (v1.0.0 - do týdne před odevzdáním, tedy 23.4.) - Kompletní knihovna, profiling a GUI, dodělávání dokumentace a instalátoru, bugfixy
