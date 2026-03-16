@@ -30,9 +30,7 @@ check-deps :
 			fi; \
 			tar -xzf $(CHECK_TAR) -C $(CHECK_SRC_DIR); \
 		fi; \
-		cd $(CHECK_EXTRACT_DIR) && ./configure --prefix=$(PWD)/$(CHECK_PREFIX) --disable-subunit; \
-		$(MAKE) -C $(CHECK_EXTRACT_DIR); \
-		$(MAKE) -C $(CHECK_EXTRACT_DIR) install; \
+		cd $(CHECK_EXTRACT_DIR) && ./configure --prefix=$(PWD)/$(CHECK_PREFIX) --disable-subunit && $(MAKE) && $(MAKE) install; \
 	fi
 
 check_install :
