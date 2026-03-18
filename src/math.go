@@ -11,7 +11,7 @@ import (
 type Error int
 
 const (
-	Success        Error = C.SUCESS
+	Success        Error = C.SUCCESS
 	DivisionByZero Error = C.DIVISION_BY_ZERO
 )
 

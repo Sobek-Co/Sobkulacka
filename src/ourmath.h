@@ -18,8 +18,11 @@
  * @brief Error types for the Math Library.
  */
 typedef enum {
-  SUCESS,
+  SUCCESS,
   DIVISION_BY_ZERO,
+  NON_INTEGER_NUMBER,
+  NON_POSITIVE_NUMBER,
+  NEGATIVE_ROOT,
 } m_err;
 
 /*
