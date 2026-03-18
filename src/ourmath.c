@@ -160,9 +160,24 @@ void m_factorial(m_state* state) {
     state->error = SUCCESS;
 }
 
-void m_sin(m_state* state) {}
+void m_sin(m_state* state) {
+        double radians = state->current * 3.14159265358979323846 / 180.0;
+        double term = radians;
+        double sum = term;
+        int n = 1;
+    
+        while (term > 0.000001 || term < -0.000001) {
+            term *= -radians * radians / ((n + 1) * (n + 2));
+            sum += term;
+            n += 2;
+        }
+    
+        state->current = sum;
+        state->error = SUCCESS;
+}
 
-void m_cos(m_state* state) {}
+void m_cos(m_state* state) {
+}
 
 void m_tg(m_state* state) {}
 
