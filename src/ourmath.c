@@ -27,11 +27,17 @@ void m_clear(m_state* state) {
 }
 
 void m_free_state(m_state* state) {
-    free(state);
+    if (state != NULL) {
+        free(state);
+    }
 }
 
 double m_get_state(const m_state* state) {
     return state->current;
+}
+
+double m_get_accuracy(const m_state* state) {
+    return state->accuracy;
 }
 
 m_err m_get_err(const m_state* state) {
@@ -41,6 +47,25 @@ m_err m_get_err(const m_state* state) {
 void m_set_state(m_state* state, double value) {
     state->current = value;
     state->error = SUCCESS;
+}
+
+void m_pi(m_state* state) {
+    double pi = 0.0;
+    double term;
+    int n = 0;
+
+    do {
+        term = (1.0 / (n * 4.0 + 1.0)) - (1.0 / (n * 4.0 + 3.0));
+        pi += term;
+        n++;
+    } while (term > state->accuracy || term < -state->accuracy);
+
+    state->current = pi * 4.0;
+    state->error = SUCCESS;
+}
+
+void m_round(m_state* state) {
+    // doplnit
 }
 
 void m_add(m_state* state, double value) {
@@ -63,6 +88,11 @@ void m_div(m_state* state, double value) {
         return;
     }
 
+    if (value == 1) {
+        state->error = SUCCESS;
+        return;
+    }
+
     state->current = state->current / value;
     state->error = SUCCESS;
 }
@@ -73,8 +103,9 @@ void m_mod(m_state* state, int value) {
         return;
     }
 
-    if (value == 0) {
-        state->error = DIVISION_BY_ZERO;
+    if (value == 1) {
+        state->error = SUCCESS;
+        state->current = 0;
         return;
     }
 
@@ -86,6 +117,12 @@ void m_power(m_state* state, int value) {
     if (value == 0) {
         state->current = 1;
         state->error = SUCCESS;
+        return;
+    }
+
+    if (value == 0) {
+        state->error = SUCCESS;
+        return;
     }
 
     if (value > 0) {
@@ -94,6 +131,7 @@ void m_power(m_state* state, int value) {
             m_mul(state, base);
         }
         state->error = SUCCESS;
+        return;
     }
 
     if (value < 0) {
@@ -104,6 +142,7 @@ void m_power(m_state* state, int value) {
         state->error = SUCCESS;
 
         m_free_state(temp_state);
+        return;
     }
 }
 
@@ -120,19 +159,18 @@ void m_root(m_state* state, int value) {
 
     double aproximate = state->current > 1 ? state->current : 1;
     double prev;
-    double eps = 0.000001;
+    double eps = state->accuracy;
 
+    m_state* temp = m_init_state();
     do {
         prev = aproximate;
 
-        m_state* temp = m_init_state();
         m_set_state(temp, aproximate);
         m_power(temp, value - 1);
 
         aproximate = ((value - 1) * aproximate + state->current / temp->current) / value;
-
-        m_free_state(temp);
     } while ((aproximate - prev > eps) || (prev - aproximate > eps));
+    m_free_state(temp);
 
     state->current = aproximate;
     state->error = SUCCESS;
@@ -161,19 +199,23 @@ void m_factorial(m_state* state) {
 }
 
 void m_sin(m_state* state) {
-        double radians = state->current * 3.14159265358979323846 / 180.0;
-        double term = radians;
-        double sum = term;
-        int n = 1;
+    m_state* temp_state = m_init_state();
+    m_pi(temp_state);
+    double radians = state->current * temp_state->current / 180.0;
+    m_free_state(temp_state);
+
+    double term = radians;
+    double sum = term;
+    int n = 1;
     
-        while (term > 0.000001 || term < -0.000001) {
-            term *= -radians * radians / ((n + 1) * (n + 2));
-            sum += term;
-            n += 2;
-        }
+    while (term > state->accuracy|| term < -state->accuracy) {
+        term *= -radians * radians / ((n + 1) * (n + 2));
+        sum += term;
+        n += 2;
+    }
     
-        state->current = sum;
-        state->error = SUCCESS;
+    state->current = sum;
+    state->error = SUCCESS;
 }
 
 void m_cos(m_state* state) {
