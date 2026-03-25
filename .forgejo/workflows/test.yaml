@@ -1,0 +1,26 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    runs-on: docker
+    container:
+      image: ghcr.io/catthehacker/ubuntu:act-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install basic build tools
+        run: |
+          apt-get update
+          apt-get install -y make gcc pkg-config
+
+      - name: Run tests
+        run: |
+          cd src
+          make test
