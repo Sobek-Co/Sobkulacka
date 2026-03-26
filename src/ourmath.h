@@ -18,8 +18,11 @@
  * @brief Error types for the Math Library.
  */
 typedef enum {
-    SUCESS,
+    SUCCESS,
     DIVISION_BY_ZERO,
+    NON_INTEGER_NUMBER,
+    NON_POSITIVE_NUMBER,
+    NEGATIVE_ROOT,
 } m_err;
 
 /*
@@ -27,6 +30,7 @@ typedef enum {
  */
 typedef struct {
     double current;
+    double accuracy;
     m_err error;
 } m_state;
 
@@ -60,6 +64,14 @@ void m_free_state(m_state* state);
 double m_get_state(const m_state* state);
 
 /*
+ * @brief Gets the accuracy from the state structure.
+ *
+ * @param state Pointer to the state structure.
+ * @return The accuracy value (double).
+ */
+double m_get_accuracy(const m_state* state);
+
+/*
  * @brief Gets the current error status from the state structure.
  *
  * @param state Pointer to the state structure.
@@ -74,6 +86,20 @@ m_err m_get_err(const m_state* state);
  * @param value The value to be set.
  */
 void m_set_state(m_state* state, double value);
+
+/*
+ * @brief Sets the current value to π, acoording to accuracy defined in the state structure.
+ *
+ * @param state Pointer to the state structure.
+ */
+void m_pi(m_state* state);
+
+/*
+ * @brief Rounds the current value in the state structure.
+ *
+ * @param state Pointer to the state structure.
+ */
+void m_round(m_state* state);
 
 /*
  * @brief Adds a value to the current value in the state structure.

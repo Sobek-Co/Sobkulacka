@@ -29,7 +29,7 @@ START_TEST(test_m_init_state) {
     m_state* s = m_init_state();
     ck_assert(s != NULL);
     ck_assert(double_equal(m_get_state(s), 0.0));
-    ck_assert(m_get_err(s) == SUCESS);
+    ck_assert(m_get_err(s) == SUCCESS);
 }
 END_TEST
 
@@ -41,7 +41,7 @@ START_TEST(test_m_clear) {
     m_set_state(s, 5.0);
     m_clear(s);
     ck_assert(double_equal(m_get_state(s), 0.0));
-    ck_assert(m_get_err(s) == SUCESS);
+    ck_assert(m_get_err(s) == SUCCESS);
 }
 END_TEST
 
@@ -60,7 +60,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_get_err) {
     m_state* s = m_init_state();
-    ck_assert(m_get_err(s) == SUCESS);
+    ck_assert(m_get_err(s) == SUCCESS);
     m_div(s, 0.0);
     ck_assert(m_get_err(s) == DIVISION_BY_ZERO);
 }
