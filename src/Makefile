@@ -70,9 +70,6 @@ deps:
 		echo "   - X11 / Wayland dev libraries"; \
 	fi
 
-	@echo "📦 Fetching Go dependencies..."
-	cd $(GO_SRC_DIR) && go mod tidy
-
 # ---- Testing ----
 
 check_install:
