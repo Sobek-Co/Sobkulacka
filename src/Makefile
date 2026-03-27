@@ -30,14 +30,25 @@ deps:
 	@echo "🔍 Installing dependencies..."
 	@if command -v pacman >/dev/null; then \
 		echo "📦 Using pacman (Arch-based)"; \
-		sudo pacman -Sy --needed \
+		sudo pacman -Sy --needed --noconfirm \
 			go \
 			check \
 			vulkan-devel \
 			libx11 \
 			libxkbcommon \
+			libxkbcommon-x11 \
+			libxcb \
+			libxcb-util \
+			libxcb-keysyms \
+			libxcb-xfixes \
+			libxcursor \
+			libxfixes \
 			wayland \
 			mesa \
+			lcov \
+			pkgconf \
+			gcc \
+			make \
 			; \
 	elif command -v apt >/dev/null; then \
 		echo "📦 Using apt (Debian/Ubuntu)"; \
@@ -48,8 +59,19 @@ deps:
 			libvulkan-dev \
 			libx11-dev \
 			libxkbcommon-dev \
+			libxkbcommon-x11-dev \
+			libxcb1-dev \
+			libxcb-xkb-dev \
+			libxcb-xfixes0-dev \
+			libx11-xcb-dev \
+			libxcursor-dev \
+			libxfixes-dev \
 			libwayland-dev \
 			mesa-common-dev \
+			lcov \
+			pkg-config \
+			gcc \
+			make \
 			; \
 	elif command -v dnf >/dev/null; then \
 		echo "📦 Using dnf (Fedora)"; \
@@ -59,8 +81,18 @@ deps:
 			vulkan-devel \
 			libX11-devel \
 			libxkbcommon-devel \
+			libxkbcommon-x11-devel \
+			libxcb-devel \
+			libxcb-devel \
+			libxcb-devel \
+			libXcursor-devel \
+			libXfixes-devel \
 			wayland-devel \
 			mesa-libGL-devel \
+			lcov \
+			pkgconf-pkg-config \
+			gcc \
+			make \
 			; \
 	else \
 		echo "⚠️ Unknown package manager. Please install manually:"; \
