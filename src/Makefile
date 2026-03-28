@@ -4,51 +4,129 @@ CC = gcc
 
 BUILD_DIR = ./build
 
-CHECK_VERSION = 0.15.2
-CHECK_PREFIX = $(BUILD_DIR)/check
-CHECK_SRC_DIR = $(BUILD_DIR)/check-source
-CHECK_TAR = $(CHECK_SRC_DIR)/check-$(CHECK_VERSION).tar.gz
-CHECK_EXTRACT_DIR = $(CHECK_SRC_DIR)/check-$(CHECK_VERSION)
-
 SRC = $(wildcard *.c)
 
-all :
-	mkdir -p $(BUILD_DIR)/
-	$(CC) -o $(BUILD_DIR)/main $(CFLAGS) $(LIBS) ourmath.c main.c
+GO_SRC_DIR = .
+GO_BUILD_OUT = $(BUILD_DIR)/app
 
-pack :
+# pkg-config helpers
+CHECK_CFLAGS := $(shell pkg-config --cflags check 2>/dev/null)
+CHECK_LIBS   := $(shell pkg-config --libs check 2>/dev/null)
 
-clean : 
+# ---- OS detection ----
+PKG_MANAGER := $(shell command -v pacman || command -v apt || command -v dnf)
+
+# ---- Main target ----
+all:
+	mkdir -p $(BUILD_DIR)
+	cd $(GO_SRC_DIR) && go build -o $(GO_BUILD_OUT)
+
+clean:
 	rm -rf $(BUILD_DIR)
 
-check-deps :
-	@if [ ! -f $(CHECK_PREFIX)/lib/libcheck.a ] && [ ! -f $(CHECK_PREFIX)/lib/libcheck.so ]; then \
-		mkdir -p $(CHECK_SRC_DIR) $(CHECK_PREFIX); \
-		if [ ! -f $(CHECK_EXTRACT_DIR)/configure ]; then \
-			if [ ! -f $(CHECK_TAR) ]; then \
-				wget -O $(CHECK_TAR) https://github.com/libcheck/check/releases/download/$(CHECK_VERSION)/check-$(CHECK_VERSION).tar.gz; \
-			fi; \
-			tar -xzf $(CHECK_TAR) -C $(CHECK_SRC_DIR); \
-		fi; \
-		cd $(CHECK_EXTRACT_DIR) && ./configure --prefix=$(PWD)/$(CHECK_PREFIX) --disable-subunit && $(MAKE) && $(MAKE) install; \
+# ---- Dependencies ----
+
+deps:
+	@echo "🔍 Installing dependencies..."
+	@if command -v pacman >/dev/null; then \
+		echo "📦 Using pacman (Arch-based)"; \
+		sudo pacman -Sy --needed --noconfirm \
+			go \
+			check \
+			vulkan-devel \
+			libx11 \
+			libxkbcommon \
+			libxkbcommon-x11 \
+			libxcb \
+			libxcb-util \
+			libxcb-keysyms \
+			libxcb-xfixes \
+			libxcursor \
+			libxfixes \
+			wayland \
+			mesa \
+			lcov \
+			pkgconf \
+			gcc \
+			make \
+			; \
+	elif command -v apt >/dev/null; then \
+		echo "📦 Using apt (Debian/Ubuntu)"; \
+		sudo apt update; \
+		sudo apt install -y \
+			golang \
+			check \
+			libvulkan-dev \
+			libx11-dev \
+			libxkbcommon-dev \
+			libxkbcommon-x11-dev \
+			libxcb1-dev \
+			libxcb-xkb-dev \
+			libxcb-xfixes0-dev \
+			libx11-xcb-dev \
+			libxcursor-dev \
+			libxfixes-dev \
+			libwayland-dev \
+			mesa-common-dev \
+			lcov \
+			pkg-config \
+			gcc \
+			make \
+			; \
+	elif command -v dnf >/dev/null; then \
+		echo "📦 Using dnf (Fedora)"; \
+		sudo dnf install -y \
+			golang \
+			check \
+			vulkan-devel \
+			libX11-devel \
+			libxkbcommon-devel \
+			libxkbcommon-x11-devel \
+			libxcb-devel \
+			libxcb-devel \
+			libxcb-devel \
+			libXcursor-devel \
+			libXfixes-devel \
+			wayland-devel \
+			mesa-libGL-devel \
+			lcov \
+			pkgconf-pkg-config \
+			gcc \
+			make \
+			; \
+	else \
+		echo "⚠️ Unknown package manager. Please install manually:"; \
+		echo "   - Go"; \
+		echo "   - libcheck"; \
+		echo "   - Vulkan headers (vulkan.h)"; \
+		echo "   - X11 / Wayland dev libraries"; \
 	fi
 
-check_install :
+# ---- Testing ----
+
+check_install:
 	@if ! pkg-config --exists check; then \
-		echo "Check library not found. Building locally in $(CHECK_PREFIX)..."; \
-		$(MAKE) check-deps; \
+		echo "❌ libcheck not found. Run 'make deps'"; \
+		exit 1; \
 	fi
 
-test : check-deps
-	mkdir -p $(BUILD_DIR)/
-	$(CC) -o $(BUILD_DIR)/test_program $(CFLAGS) -I$(CHECK_PREFIX)/include ourmath.c test_ourmath.c -L$(CHECK_PREFIX)/lib -lcheck -pthread -lrt -lm
-	LD_LIBRARY_PATH=$(CHECK_PREFIX)/lib $(BUILD_DIR)/test_program
+test: check_install
+	mkdir -p $(BUILD_DIR)
+	$(CC) -o $(BUILD_DIR)/test_program \
+		$(CFLAGS) $(CHECK_CFLAGS) \
+		ourmath.c test/test_ourmath.c \
+		$(CHECK_LIBS) -pthread -lrt -lm
+	$(BUILD_DIR)/test_program
 
-doc : all
+# ---- Run ----
 
-run : all
-	$(BUILD_DIR)/main
+run: all
+	$(GO_BUILD_OUT)
 
-stddev : all
-
-help :
+help:
+	@echo "Targets:"
+	@echo "  all      - Build Go app"
+	@echo "  deps     - Install system + Go dependencies"
+	@echo "  test     - Run C tests"
+	@echo "  run      - Run built app"
+	@echo "  clean    - Remove build directory"
