@@ -83,8 +83,8 @@ jobs:
             -n "sobkulacka" \
             -v "${{ needs.build.outputs.deb_version }}" \
             --description "Calculator application" \
-            --maintainer "${{ gitea.repository_owner }}" \
-            --url "${{ gitea.server_url }}/${{ gitea.repository }}" \
+            --maintainer "${{ github.repository_owner }}" \
+            --url "${{ github.server_url }}/${{ github.repository }}" \
             --license "GPL-3.0-only" \
             dist/app=/usr/bin/sobkulacka
 
@@ -96,7 +96,7 @@ jobs:
             -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
             -X PUT \
             --upload-file "${DEB}" \
-            "${{ gitea.server_url }}/api/packages/${{ gitea.repository_owner }}/debian/pool/${CHANNEL}/main/upload"
+            "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/debian/pool/${CHANNEL}/main/upload"
 
   package-arch:
     needs: build
@@ -139,7 +139,7 @@ jobs:
           EOF
 
           sed -i "s|PKGVER_PLACEHOLDER|${{ needs.build.outputs.arch_version }}|g" PKGBUILD
-          sed -i "s|REPO_URL_PLACEHOLDER|${{ gitea.server_url }}/${{ gitea.repository }}|g" PKGBUILD
+          sed -i "s|REPO_URL_PLACEHOLDER|${{ github.server_url }}/${{ github.repository }}|g" PKGBUILD
 
           chown builder:builder PKGBUILD
 
@@ -153,4 +153,4 @@ jobs:
             -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
             -X PUT \
             --upload-file "${PKG}" \
-            "${{ gitea.server_url }}/api/packages/${{ gitea.repository_owner }}/arch/push"
+            "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/arch/push"
