@@ -9,7 +9,7 @@ jobs:
   test:
     runs-on: docker
     container:
-      image: ghcr.io/catthehacker/ubuntu:act-22.04
+      image: ghcr.io/catthehacker/ubuntu:act-24.04
 
     steps:
       - name: Checkout repository
