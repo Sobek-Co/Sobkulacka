@@ -1,0 +1,156 @@
+name: Build and Publish Packages
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: docker
+    container:
+      image: ghcr.io/catthehacker/ubuntu:act-22.04
+    outputs:
+      version:      ${{ steps.version.outputs.version }}
+      deb_version:  ${{ steps.version.outputs.deb_version }}
+      arch_version: ${{ steps.version.outputs.arch_version }}
+      channel:      ${{ steps.version.outputs.channel }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine version and channel
+        id: version
+        run: |
+          BASE=$(git describe 2>/dev/null || echo "0.1.0")
+
+          if [ "${GITHUB_REF_NAME}" = "master" ]; then
+            echo "version=${BASE}"       >> $GITHUB_OUTPUT
+            echo "deb_version=${BASE}"   >> $GITHUB_OUTPUT
+            echo "arch_version=${BASE}"  >> $GITHUB_OUTPUT
+            echo "channel=stable"        >> $GITHUB_OUTPUT
+          else
+            BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr -cd '[:alnum:]-' | cut -c1-20)
+            SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+
+            echo "version=${BASE}-dev.${BRANCH}.${SHA}"       >> $GITHUB_OUTPUT
+            echo "deb_version=${BASE}~dev.${BRANCH}.${SHA}"   >> $GITHUB_OUTPUT
+            echo "arch_version=${BASE}.dev.${BRANCH}.${SHA}"  >> $GITHUB_OUTPUT
+            echo "channel=dev"                                >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies and build
+        run: |
+          cd src
+          make deps
+          make all
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-binary
+          path: src/build/app
+
+  package-debian:
+    needs: build
+    runs-on: docker
+    container:
+      image: ghcr.io/catthehacker/ubuntu:act-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download binary
+        uses: actions/download-artifact@v3
+        with:
+          name: app-binary
+          path: dist/
+
+      - name: Install fpm
+        run: |
+          apt-get update -qq
+          apt-get install -y ruby ruby-dev rubygems build-essential
+          gem install fpm --no-document
+
+      - name: Build .deb package
+        run: |
+          chmod +x dist/app
+          fpm \
+            -s dir \
+            -t deb \
+            -n "sobkulacka" \
+            -v "${{ needs.build.outputs.deb_version }}" \
+            --description "Calculator application" \
+            --maintainer "${{ gitea.repository_owner }}" \
+            --url "${{ gitea.server_url }}/${{ gitea.repository }}" \
+            --license "GPL-3.0-only" \
+            dist/app=/usr/bin/sobkulacka
+
+      - name: Publish to Forgejo Debian registry
+        run: |
+          CHANNEL="${{ needs.build.outputs.channel }}"
+          DEB=$(ls sobkulacka_*.deb | head -1)
+          curl --fail \
+            -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
+            -X PUT \
+            --upload-file "${DEB}" \
+            "${{ gitea.server_url }}/api/packages/${{ gitea.repository_owner }}/debian/pool/${CHANNEL}/main/upload"
+
+  package-arch:
+    needs: build
+    runs-on: docker
+    container:
+      image: archlinux:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download binary
+        uses: actions/download-artifact@v3
+        with:
+          name: app-binary
+          path: dist/
+
+      - name: Install packaging tools
+        run: pacman -Sy --noconfirm base-devel
+
+      - name: Create unprivileged build user
+        run: |
+          useradd -m builder
+          chown -R builder:builder .
+
+      - name: Generate PKGBUILD
+        run: |
+          cat > PKGBUILD << 'EOF'
+          pkgname=sobkulacka
+          pkgver=PKGVER_PLACEHOLDER
+          pkgrel=1
+          pkgdesc="Sobkulčka"
+          arch=('x86_64')
+          url="REPO_URL_PLACEHOLDER"
+          license=('GPL-3.0-only')
+
+          package() {
+            install -Dm755 "${startdir}/dist/app" "${pkgdir}/usr/bin/sobkulacka"
+          }
+          EOF
+
+          sed -i "s|PKGVER_PLACEHOLDER|${{ needs.build.outputs.arch_version }}|g" PKGBUILD
+          sed -i "s|REPO_URL_PLACEHOLDER|${{ gitea.server_url }}/${{ gitea.repository }}|g" PKGBUILD
+
+          chown builder:builder PKGBUILD
+
+      - name: Build Arch package
+        run: su builder -c "makepkg -f --nodeps"
+
+      - name: Publish to Forgejo Arch registry
+        run: |
+          PKG=$(ls *.pkg.tar.zst | head -1)
+          curl --fail \
+            -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
+            -X PUT \
+            --upload-file "${PKG}" \
+            "${{ gitea.server_url }}/api/packages/${{ gitea.repository_owner }}/arch/push"
