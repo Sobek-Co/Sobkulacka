@@ -56,6 +56,8 @@ deps:
 		sudo apt install -y \
 			golang \
 			check \
+			libegl-dev \
+      libgles2-mesa-dev \
 			libvulkan-dev \
 			libx11-dev \
 			libxkbcommon-dev \
