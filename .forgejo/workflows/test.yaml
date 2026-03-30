@@ -20,8 +20,11 @@ jobs:
           apt-get update
           apt-get install -y make gcc pkg-config
 
-      - name: Run tests
+      - name: Prepare for tests
         run: |
           cd src
           make deps
+      - name: Run tests
+        run: |
+          cd src
           make test
