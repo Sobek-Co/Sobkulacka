@@ -50,10 +50,11 @@ jobs:
             SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
 
             ARCH_BRANCH=$(echo "${BRANCH}" | tr '-' '.')
+            ARCH_BASE=$(echo "${BASE}" | sed 's/^v//' | tr '-' '.')
 
             echo "version=${BASE}-dev.${BRANCH}.${SHA}"       >> $GITHUB_OUTPUT
             echo "deb_version=${BASE}~dev.${BRANCH}.${SHA}"   >> $GITHUB_OUTPUT
-            echo "arch_version=${BASE}.dev.${ARCH_BRANCH}.${SHA}"  >> $GITHUB_OUTPUT
+            echo "arch_version=${ARCH_BASE}.dev.${ARCH_BRANCH}.${SHA}"  >> $GITHUB_OUTPUT
             echo "channel=dev"                                >> $GITHUB_OUTPUT
           fi
 
