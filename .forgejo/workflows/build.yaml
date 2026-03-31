@@ -59,9 +59,6 @@ jobs:
       image: ghcr.io/catthehacker/ubuntu:act-22.04
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Download binary
         uses: actions/download-artifact@v3
         with:
@@ -105,9 +102,6 @@ jobs:
       image: archlinux:latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Download binary
         uses: actions/download-artifact@v3
         with:
