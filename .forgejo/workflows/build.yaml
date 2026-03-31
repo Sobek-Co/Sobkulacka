@@ -153,6 +153,9 @@ jobs:
           arch = x86_64
           license = GPL-3.0-only
           EOF
+          sed -i 's/^[[:space:]]*//' $STAGING/.PKGINFO
+
+          echo "=== .PKGINFO contents ===" && cat $STAGING/.PKGINFO
 
           bsdtar -czf $STAGING/.MTREE \
             --format=mtree \
