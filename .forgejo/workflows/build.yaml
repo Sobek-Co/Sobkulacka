@@ -168,12 +168,8 @@ jobs:
             .MTREE \
             usr
 
-          echo "PKG=/tmp/${PKG}" >> $GITHUB_ENV
-
-      - name: Publish to Forgejo Arch registry
-        run: |
           curl --fail-with-body \
             -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
             -X PUT \
-            --upload-file "${PKG}" \
+            --upload-file "/tmp/${PKG}" \
             "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/arch/extra"
