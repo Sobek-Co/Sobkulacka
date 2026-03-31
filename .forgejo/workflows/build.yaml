@@ -25,6 +25,8 @@ jobs:
         run: |
           BASE=$(git describe 2>/dev/null || echo "0.1.0")
 
+          echo "git describe: $(git describe)"
+
           if [ "${GITHUB_REF_NAME}" = "master" ]; then
             echo "version=${BASE}"       >> $GITHUB_OUTPUT
             echo "deb_version=${BASE}"   >> $GITHUB_OUTPUT
@@ -79,7 +81,7 @@ jobs:
             -t deb \
             -n "sobkulacka" \
             -v "${{ needs.build.outputs.deb_version }}" \
-            --description "Calculator application" \
+            --description "Davidova Sobkulačka" \
             --maintainer "${{ github.repository_owner }}" \
             --url "${{ github.server_url }}/${{ github.repository }}" \
             --license "GPL-3.0-only" \
@@ -99,7 +101,7 @@ jobs:
     needs: build
     runs-on: docker
     container:
-      image: archlinux:latest
+      image: ghcr.io/catthehacker/ubuntu:act-24.04
 
     steps:
       - name: Download binary
@@ -108,41 +110,58 @@ jobs:
           name: app-binary
           path: dist/
 
-      - name: Install packaging tools
-        run: pacman -Sy --noconfirm base-devel
-
-      - name: Create unprivileged build user
+      - name: Set up Arch chroot
         run: |
-          useradd -m builder
-          chown -R builder:builder .
+          apt-get update -qq
+          apt-get install -y curl zstd arch-install-scripts
 
-      - name: Generate PKGBUILD
+          curl -L "https://mirror.vypal.me/arch/iso/latest/archlinux-bootstrap-x86_64.tar.zst" \
+            -o /tmp/arch.tar.zst
+          tar -xf /tmp/arch.tar.zst -C /tmp
+
+          CHROOT=/tmp/root.x86_64
+
+          echo 'Server = https://mirror.vypal.me/arch/$repo/os/$arch' \
+            > $CHROOT/etc/pacman.d/mirrorlist
+          mount --bind $CHROOT $CHROOT
+          arch-chroot $CHROOT pacman-key --init
+          arch-chroot $CHROOT pacman-key --populate archlinux
+          arch-chroot $CHROOT pacman -Sy --noconfirm base-devel
+
+          arch-chroot $CHROOT useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> $CHROOT/etc/sudoers
+
+      - name: Build Arch package
         run: |
-          cat > PKGBUILD << 'EOF'
+          CHROOT=/tmp/root.x86_64
+
+          mkdir -p $CHROOT/build
+          cp dist/app $CHROOT/build/app
+          chmod +x $CHROOT/build/app
+
+          cat > $CHROOT/build/PKGBUILD << 'EOF'
           pkgname=sobkulacka
           pkgver=PKGVER_PLACEHOLDER
           pkgrel=1
-          pkgdesc="Sobkulčka"
+          pkgdesc="Davidova Sobkulačka"
           arch=('x86_64')
           url="REPO_URL_PLACEHOLDER"
-          license=('GPL-3.0-only')
+          license=('GPL3.0-only')
 
           package() {
-            install -Dm755 "${startdir}/dist/app" "${pkgdir}/usr/bin/sobkulacka"
+            install -Dm755 "${startdir}/app" "${pkgdir}/usr/bin/sobkulacka"
           }
           EOF
 
-          sed -i "s|PKGVER_PLACEHOLDER|${{ needs.build.outputs.arch_version }}|g" PKGBUILD
-          sed -i "s|REPO_URL_PLACEHOLDER|${{ github.server_url }}/${{ github.repository }}|g" PKGBUILD
+          sed -i "s|PKGVER_PLACEHOLDER|${{ needs.build.outputs.arch_version }}|g" $CHROOT/build/PKGBUILD
+          sed -i "s|REPO_URL_PLACEHOLDER|${{ github.server_url }}/${{ github.repository }}|g" $CHROOT/build/PKGBUILD
 
-          chown builder:builder PKGBUILD
-
-      - name: Build Arch package
-        run: su builder -c "makepkg -f --nodeps"
+          chown -R 1000:1000 $CHROOT/build
+          arch-chroot $CHROOT su builder -c "cd /build && makepkg -f --nodeps"
 
       - name: Publish to Forgejo Arch registry
         run: |
-          PKG=$(ls *.pkg.tar.zst | head -1)
+          PKG=$(ls /tmp/root.x86_64/build/*.pkg.tar.zst | head -1)
           curl --fail \
             -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
             -X PUT \
