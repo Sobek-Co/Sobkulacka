@@ -170,4 +170,4 @@ jobs:
             -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
             -X PUT \
             --upload-file "${PKG}" \
-            "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/arch/push"
+            "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/arch/extra"
