@@ -49,9 +49,11 @@ jobs:
             BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr -cd '[:alnum:]-' | cut -c1-20)
             SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
 
+            ARCH_BRANCH=$(echo "${BRANCH}" | tr '-' '.')
+
             echo "version=${BASE}-dev.${BRANCH}.${SHA}"       >> $GITHUB_OUTPUT
             echo "deb_version=${BASE}~dev.${BRANCH}.${SHA}"   >> $GITHUB_OUTPUT
-            echo "arch_version=${BASE}.dev.${BRANCH}.${SHA}"  >> $GITHUB_OUTPUT
+            echo "arch_version=${BASE}.dev.${ARCH_BRANCH}.${SHA}"  >> $GITHUB_OUTPUT
             echo "channel=dev"                                >> $GITHUB_OUTPUT
           fi
 
