@@ -172,7 +172,7 @@ jobs:
 
       - name: Publish to Forgejo Arch registry
         run: |
-          curl --fail \
+          curl \
             -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
             -X PUT \
             --upload-file "${PKG}" \
