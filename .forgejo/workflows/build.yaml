@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-tags: true
+          fetch-depth: 0
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -114,7 +115,6 @@ jobs:
     runs-on: docker
     container:
       image: ghcr.io/catthehacker/ubuntu:act-24.04
-      options: --privileged
 
     steps:
       - name: Download binary
@@ -123,57 +123,49 @@ jobs:
           name: app-binary
           path: dist/
 
-      - name: Set up Arch chroot
+      - name: Install zstd
+        run: apt-get update -qq && apt-get install -y zstd
+
+      - name: Build Arch package manually
         run: |
-          apt-get update -qq
-          apt-get install -y curl zstd arch-install-scripts
+          VERSION="${{ needs.build.outputs.arch_version }}"
+          PKGNAME="sobkulacka"
+          STAGING=$(mktemp -d)
 
-          curl -L "https://mirror.vypal.me/arch/iso/latest/archlinux-bootstrap-x86_64.tar.zst" \
-            -o /tmp/arch.tar.zst
-          tar -xf /tmp/arch.tar.zst -C /tmp
+          mkdir -p $STAGING/usr/bin
+          cp dist/app $STAGING/usr/bin/$PKGNAME
+          chmod 755 $STAGING/usr/bin/$PKGNAME
 
-          CHROOT=/tmp/root.x86_64
+          SIZE=$(du -sb $STAGING/usr/bin/$PKGNAME | cut -f1)
+          BUILDDATE=$(date +%s)
 
-          echo 'Server = https://mirror.vypal.me/arch/$repo/os/$arch' \
-            > $CHROOT/etc/pacman.d/mirrorlist
-          arch-chroot $CHROOT pacman-key --init
-          arch-chroot $CHROOT pacman-key --populate archlinux
-          arch-chroot $CHROOT pacman -Sy --noconfirm base-devel
-
-          arch-chroot $CHROOT useradd -m builder
-          echo "builder ALL=(ALL) NOPASSWD: ALL" >> $CHROOT/etc/sudoers
-
-      - name: Build Arch package
-        run: |
-          CHROOT=/tmp/root.x86_64
-
-          mkdir -p $CHROOT/build
-          cp dist/app $CHROOT/build/app
-          chmod +x $CHROOT/build/app
-
-          cat > $CHROOT/build/PKGBUILD << 'EOF'
-          pkgname=sobkulacka
-          pkgver=PKGVER_PLACEHOLDER
-          pkgrel=1
-          pkgdesc="Davidova Sobkulačka"
-          arch=('x86_64')
-          url="REPO_URL_PLACEHOLDER"
-          license=('GPL3.0-only')
-
-          package() {
-            install -Dm755 "${startdir}/app" "${pkgdir}/usr/bin/sobkulacka"
-          }
+          cat > $STAGING/.PKGINFO << EOF
+          pkgname = ${PKGNAME}
+          pkgbase = ${PKGNAME}
+          pkgver = ${VERSION}-1
+          pkgdesc = Davidova Sobkulačka
+          url = ${{ github.server_url }}/${{ github.repository }}
+          builddate = ${BUILDDATE}
+          packager = CI
+          size = ${SIZE}
+          arch = x86_64
+          license = GPL-3.0-only
           EOF
 
-          sed -i "s|PKGVER_PLACEHOLDER|${{ needs.build.outputs.arch_version }}|g" $CHROOT/build/PKGBUILD
-          sed -i "s|REPO_URL_PLACEHOLDER|${{ github.server_url }}/${{ github.repository }}|g" $CHROOT/build/PKGBUILD
+          # Build the package — .PKGINFO must come first
+          PKG="${PKGNAME}-${VERSION}-1-x86_64.pkg.tar.zst"
+          tar -C $STAGING \
+            --numeric-owner \
+            -c \
+            -I zstd \
+            -f /tmp/${PKG} \
+            .PKGINFO \
+            usr
 
-          chown -R 1000:1000 $CHROOT/build
-          arch-chroot $CHROOT su builder -c "cd /build && makepkg -f --nodeps"
+          echo "PKG=/tmp/${PKG}" >> $GITHUB_ENV
 
       - name: Publish to Forgejo Arch registry
         run: |
-          PKG=$(ls /tmp/root.x86_64/build/*.pkg.tar.zst | head -1)
           curl --fail \
             -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
             -X PUT \
