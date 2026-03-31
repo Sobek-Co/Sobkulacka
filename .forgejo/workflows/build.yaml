@@ -152,7 +152,12 @@ jobs:
           license = GPL-3.0-only
           EOF
 
-          # Build the package — .PKGINFO must come first
+          bsdtar -czf $STAGING/.MTREE \
+            --format=mtree \
+            --options='!all,use-set,type,uid,gid,mode,time,size,md5,sha256,link' \
+            -C $STAGING \
+            .PKGINFO usr
+
           PKG="${PKGNAME}-${VERSION}-1-x86_64.pkg.tar.zst"
           tar -C $STAGING \
             --numeric-owner \
@@ -160,6 +165,7 @@ jobs:
             -I zstd \
             -f /tmp/${PKG} \
             .PKGINFO \
+            .MTREE \
             usr
 
           echo "PKG=/tmp/${PKG}" >> $GITHUB_ENV
