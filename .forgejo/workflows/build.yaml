@@ -124,7 +124,7 @@ jobs:
           path: dist/
 
       - name: Install zstd
-        run: apt-get update -qq && apt-get install -y zstd
+        run: apt-get update -qq && apt-get install -y zstd libarchive-tools
 
       - name: Build Arch package manually
         run: |
