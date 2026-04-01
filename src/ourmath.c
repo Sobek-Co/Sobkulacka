@@ -49,6 +49,11 @@ void m_set_state(m_state* state, double value) {
     state->error = SUCCESS;
 }
 
+void m_set_accuracy(m_state* state, double accuracy) {
+    state->accuracy = accuracy;
+    state->error = SUCCESS;
+}
+
 void m_pi(m_state* state) {
     double pi = 0.0;
     double term;
@@ -240,7 +245,9 @@ void m_cos(m_state* state) {
 
 void m_tg(m_state* state) {
     m_state* temp_state = m_init_state();
-
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
+    
     m_sin(temp_state);
     double sin_value = temp_state->current;
     m_cos(temp_state);
@@ -258,7 +265,9 @@ void m_tg(m_state* state) {
 
 void m_cotg(m_state* state) {
     m_state* temp_state = m_init_state();
-    
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
+
     m_sin(temp_state);
     double sin_value = temp_state->current;
     m_cos(temp_state);

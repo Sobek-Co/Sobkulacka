@@ -88,6 +88,14 @@ m_err m_get_err(const m_state* state);
 void m_set_state(m_state* state, double value);
 
 /*
+ * @brief Sets the accuracy in the state structure.
+ *
+ * @param state Pointer to the state structure.
+ * @param accuracy The accuracy value to be set.
+ */
+void m_set_accuracy(m_state* state, double accuracy);
+
+/*
  * @brief Sets the current value to π, acoording to accuracy defined in the state structure.
  *
  * @param state Pointer to the state structure.
