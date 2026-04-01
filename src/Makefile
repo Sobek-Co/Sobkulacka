@@ -19,7 +19,7 @@ PKG_MANAGER := $(shell command -v pacman || command -v apt || command -v dnf)
 # ---- Main target ----
 all:
 	mkdir -p $(BUILD_DIR)
-	cd $(GO_SRC_DIR) && go build -o $(GO_BUILD_OUT)
+	cd $(GO_SRC_DIR) && go mod tidy && go build -o $(GO_BUILD_OUT)
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -33,20 +33,11 @@ deps:
 		sudo pacman -Sy --needed --noconfirm \
 			go \
 			check \
-			vulkan-devel \
-			libx11 \
-			libxkbcommon \
-			libxkbcommon-x11 \
-			libxcb \
-			libxcb-util \
-			libxcb-keysyms \
-			libxcb-xfixes \
-			libxcursor \
-			libxfixes \
-			wayland \
-			mesa \
-			lcov \
-			pkgconf \
+			gtk4 \
+			libadwaita \
+			gdk-pixbuf2 \
+			gobject-introspection \
+			pkg-config \
 			gcc \
 			make \
 			; \
@@ -56,19 +47,11 @@ deps:
 		sudo apt install -y \
 			golang \
 			check \
-			libvulkan-dev \
-			libx11-dev \
-			libxkbcommon-dev \
-			libxkbcommon-x11-dev \
-			libxcb1-dev \
-			libxcb-xkb-dev \
-			libxcb-xfixes0-dev \
-			libx11-xcb-dev \
-			libxcursor-dev \
-			libxfixes-dev \
-			libwayland-dev \
-			mesa-common-dev \
-			lcov \
+			libgtk-4-dev \
+			libgtk-4-common \
+			libadwaita-1-dev \
+			libgdk-pixbuf-2.0-dev \
+			libgobject-introspection1.0-dev \
 			pkg-config \
 			gcc \
 			make \
@@ -78,18 +61,10 @@ deps:
 		sudo dnf install -y \
 			golang \
 			check \
-			vulkan-devel \
-			libX11-devel \
-			libxkbcommon-devel \
-			libxkbcommon-x11-devel \
-			libxcb-devel \
-			libxcb-devel \
-			libxcb-devel \
-			libXcursor-devel \
-			libXfixes-devel \
-			wayland-devel \
-			mesa-libGL-devel \
-			lcov \
+			gtk4-devel \
+			libadwaita-devel \
+			gdk-pixbuf2-devel \
+			gobject-introspection-devel \
 			pkgconf-pkg-config \
 			gcc \
 			make \
@@ -98,8 +73,9 @@ deps:
 		echo "⚠️ Unknown package manager. Please install manually:"; \
 		echo "   - Go"; \
 		echo "   - libcheck"; \
-		echo "   - Vulkan headers (vulkan.h)"; \
-		echo "   - X11 / Wayland dev libraries"; \
+		echo "   - GTK4 development files (libgtk-4-dev or gtk4-devel)"; \
+		echo "   - GDK Pixbuf development files"; \
+		echo "   - pkg-config"; \
 	fi
 
 # ---- Testing ----
