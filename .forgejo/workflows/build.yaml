@@ -1,0 +1,180 @@
+name: Build and Publish Packages
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: docker
+    container:
+      image: ghcr.io/catthehacker/ubuntu:act-24.04
+    outputs:
+      version:      ${{ steps.version.outputs.version }}
+      deb_version:  ${{ steps.version.outputs.deb_version }}
+      arch_version: ${{ steps.version.outputs.arch_version }}
+      channel:      ${{ steps.version.outputs.channel }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('src/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Determine version and channel
+        id: version
+        run: |
+          BASE=$(git describe 2>/dev/null || echo "0.1.0")
+
+          echo "git describe: $(git describe)"
+
+          if [ "${GITHUB_REF_NAME}" = "master" ]; then
+            echo "version=${BASE}"       >> $GITHUB_OUTPUT
+            echo "deb_version=${BASE}"   >> $GITHUB_OUTPUT
+            echo "arch_version=${BASE}"  >> $GITHUB_OUTPUT
+            echo "channel=stable"        >> $GITHUB_OUTPUT
+          else
+            BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr -cd '[:alnum:]-' | cut -c1-20)
+
+            ARCH_BRANCH=$(echo "${BRANCH}" | tr '-' '.')
+            ARCH_BASE=$(echo "${BASE}" | sed 's/^v//' | tr '-' '.')
+
+            echo "version=${BASE}-dev.${BRANCH}"       >> $GITHUB_OUTPUT
+            echo "deb_version=${BASE}~dev.${BRANCH}"   >> $GITHUB_OUTPUT
+            echo "arch_version=${ARCH_BASE}.dev.${ARCH_BRANCH}"  >> $GITHUB_OUTPUT
+            echo "channel=dev"                                >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies and build
+        run: |
+          cd src
+          make deps
+          make all
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-binary
+          path: src/build/app
+
+  package-debian:
+    needs: build
+    runs-on: docker
+    container:
+      image: ghcr.io/catthehacker/ubuntu:act-22.04
+
+    steps:
+      - name: Download binary
+        uses: actions/download-artifact@v3
+        with:
+          name: app-binary
+          path: dist/
+
+      - name: Install fpm
+        run: |
+          apt-get update -qq
+          apt-get install -y ruby ruby-dev rubygems build-essential
+          gem install fpm --no-document
+
+      - name: Build .deb package
+        run: |
+          chmod +x dist/app
+          fpm \
+            -s dir \
+            -t deb \
+            -n "sobkulacka" \
+            -v "${{ needs.build.outputs.deb_version }}" \
+            --description "Davidova Sobkulačka" \
+            --maintainer "${{ github.repository_owner }}" \
+            --url "${{ github.server_url }}/${{ github.repository }}" \
+            --license "GPL-3.0-only" \
+            dist/app=/usr/bin/sobkulacka
+
+      - name: Publish to Forgejo Debian registry
+        run: |
+          CHANNEL="${{ needs.build.outputs.channel }}"
+          DEB=$(ls sobkulacka_*.deb | head -1)
+          curl --fail \
+            -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
+            -X PUT \
+            --upload-file "${DEB}" \
+            "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/debian/pool/${CHANNEL}/main/upload"
+
+  package-arch:
+    needs: build
+    runs-on: docker
+    container:
+      image: ghcr.io/catthehacker/ubuntu:act-24.04
+
+    steps:
+      - name: Download binary
+        uses: actions/download-artifact@v3
+        with:
+          name: app-binary
+          path: dist/
+
+      - name: Install zstd
+        run: apt-get update -qq && apt-get install -y zstd libarchive-tools
+
+      - name: Build Arch package manually
+        run: |
+          VERSION="${{ needs.build.outputs.arch_version }}"
+          PKGNAME="sobkulacka"
+          STAGING=$(mktemp -d)
+
+          mkdir -p $STAGING/usr/bin
+          cp dist/app $STAGING/usr/bin/$PKGNAME
+          chmod 755 $STAGING/usr/bin/$PKGNAME
+
+          SIZE=$(du -sb $STAGING/usr/bin/$PKGNAME | cut -f1)
+          BUILDDATE=$(date +%s)
+
+          cat > $STAGING/.PKGINFO << EOF
+          pkgname = ${PKGNAME}
+          pkgbase = ${PKGNAME}
+          pkgver = ${VERSION}-1
+          pkgdesc = Davidova Sobkulačka
+          url = ${{ github.server_url }}/${{ github.repository }}
+          builddate = ${BUILDDATE}
+          packager = CI
+          size = ${SIZE}
+          arch = x86_64
+          license = GPL-3.0-only
+          EOF
+          sed -i 's/^[[:space:]]*//' $STAGING/.PKGINFO
+
+          echo "=== .PKGINFO contents ===" && cat $STAGING/.PKGINFO
+
+          bsdtar -czf $STAGING/.MTREE \
+            --format=mtree \
+            --options='!all,use-set,type,uid,gid,mode,time,size,md5,sha256,link' \
+            -C $STAGING \
+            .PKGINFO usr
+
+          PKG="${PKGNAME}-${VERSION}-1-x86_64.pkg.tar.zst"
+          tar -C $STAGING \
+            --numeric-owner \
+            -c \
+            -I zstd \
+            -f /tmp/${PKG} \
+            .PKGINFO \
+            .MTREE \
+            usr
+
+          curl --fail-with-body \
+            -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
+            -X PUT \
+            --upload-file "/tmp/${PKG}" \
+            "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/arch/extra"
