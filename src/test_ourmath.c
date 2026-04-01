@@ -15,18 +15,21 @@
 #include <math.h>
 #include "ourmath.h"
 
+const double HIGH_ACCURACY = 1e-9;
+const double LOW_ACCURACY = 1e-3;
+
 // ---------------------------
 // Helper for comparing doubles
 // ---------------------------
 int double_equal(double a, double b) {
-    return fabs(a - b) < 1e-9;
+    return fabs(a - b) < HIGH_ACCURACY;
 }
 
 // ---------------------------
 // Helper for comparing doubles with less accuracy
 // ---------------------------
 int double_equal_forgiving(double a, double b) {
-    return fabs(a - b) < 1e-3;
+    return fabs(a - b) < LOW_ACCURACY;
 }
 
 // ---------------------------
@@ -70,8 +73,8 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_set_get_accuracy) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, 1e-9);
-    ck_assert(double_equal(m_get_accuracy(s), 1e-9));
+    m_set_accuracy(s, HIGH_ACCURACY);
+    ck_assert(double_equal(m_get_accuracy(s), HIGH_ACCURACY));
     m_free_state(s);
 }
 END_TEST
@@ -93,6 +96,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_add) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, HIGH_ACCURACY);
     m_add(s, 2.5);
     ck_assert(double_equal(m_get_state(s), 2.5));
     m_free_state(s);
@@ -104,6 +108,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_sub) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, HIGH_ACCURACY);
     m_set_state(s, 5.0);
     m_sub(s, 3.0);
     ck_assert(double_equal(m_get_state(s), 2.0));
@@ -116,6 +121,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_mul) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, HIGH_ACCURACY);
     m_set_state(s, 3.0);
     m_mul(s, 4.0);
     ck_assert(double_equal(m_get_state(s), 12.0));
@@ -128,6 +134,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_div) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, HIGH_ACCURACY);
     m_set_state(s, 10.0);
     m_div(s, 2.0);
     ck_assert(double_equal(m_get_state(s), 5.0));
@@ -143,6 +150,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_mod) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, HIGH_ACCURACY);
     m_set_state(s, 10.0);
     m_mod(s, 3);
     ck_assert(double_equal(m_get_state(s), 1.0));
@@ -155,6 +163,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_power) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, HIGH_ACCURACY);
     m_set_state(s, 2.0);
     m_power(s, 3);
     ck_assert(double_equal(m_get_state(s), 8.0));
@@ -167,6 +176,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_root) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, HIGH_ACCURACY);
     m_set_state(s, 9.0);
     m_root(s, 2);
     ck_assert(double_equal(m_get_state(s), 3.0));
@@ -179,6 +189,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_factorial) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, HIGH_ACCURACY);
     m_set_state(s, 5.0);
     m_factorial(s);
     ck_assert(double_equal(m_get_state(s), 120.0));
@@ -191,6 +202,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_sin) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, LOW_ACCURACY);
     m_set_state(s, 90.0);
     m_sin(s);
     ck_assert(double_equal(m_get_state(s), 1.0));
@@ -203,6 +215,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_cos) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, LOW_ACCURACY);
     m_set_state(s, 180.0);
     m_cos(s);
     ck_assert(double_equal(m_get_state(s), -1.0));
@@ -215,6 +228,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_tg) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, LOW_ACCURACY);
     m_set_state(s, 45.0);
     m_tg(s);
     ck_assert(double_equal(m_get_state(s), 1.0));
@@ -227,6 +241,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_cotg) {
     m_state* s = m_init_state();
+    m_set_accuracy(s, LOW_ACCURACY);
     m_set_state(s, 45.0);
     m_cotg(s);
     ck_assert(double_equal(m_get_state(s), 1.0));
