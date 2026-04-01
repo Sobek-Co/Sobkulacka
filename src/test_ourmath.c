@@ -23,6 +23,13 @@ int double_equal(double a, double b) {
 }
 
 // ---------------------------
+// Helper for comparing doubles with less accuracy
+// ---------------------------
+int double_equal_forgiving(double a, double b) {
+    return fabs(a - b) < 1e-3;
+}
+
+// ---------------------------
 // m_init_state
 // ---------------------------
 START_TEST(test_m_init_state) {
