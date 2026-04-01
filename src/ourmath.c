@@ -219,8 +219,57 @@ void m_sin(m_state* state) {
 }
 
 void m_cos(m_state* state) {
+    m_state* temp_state = m_init_state();
+    m_pi(temp_state);
+    double radians = state->current * temp_state->current / 180.0;
+    m_free_state(temp_state);
+
+    double term = 1.0;
+    double sum = term;
+    int n = 0;
+
+    while (term > state->accuracy || term < -state->accuracy) {
+        term *= -radians * radians / ((n + 1) * (n + 2));
+        sum += term;
+        n += 2;
+    }
+
+    state->current = sum;
+    state->error = SUCCESS;
 }
 
-void m_tg(m_state* state) {}
+void m_tg(m_state* state) {
+    m_state* temp_state = m_init_state();
 
-void m_cotg(m_state* state) {}
+    m_sin(temp_state);
+    double sin_value = temp_state->current;
+    m_cos(temp_state);
+    double cos_value = temp_state->current;
+    m_free_state(temp_state);
+
+    if (cos_value == 0) {
+        state->error = DIVISION_BY_ZERO;
+        return;
+    }
+
+    state->current = sin_value / cos_value;
+    state->error = SUCCESS;
+}
+
+void m_cotg(m_state* state) {
+    m_state* temp_state = m_init_state();
+    
+    m_sin(temp_state);
+    double sin_value = temp_state->current;
+    m_cos(temp_state);
+    double cos_value = temp_state->current;
+    m_free_state(temp_state);
+
+    if (sin_value == 0) {
+        state->error = DIVISION_BY_ZERO;
+        return;
+    }
+
+    state->current = cos_value / sin_value;
+    state->error = SUCCESS;
+}
