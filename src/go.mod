@@ -1,6 +1,6 @@
 module git.sleepat.fit/sobekco/sobkulacka/gui
 
-go 1.26.1
+go 1.26.0
 
 require github.com/diamondburned/gotk4/pkg v0.2.2
 
