@@ -15,21 +15,21 @@
 #include <math.h>
 #include "ourmath.h"
 
-const double HIGH_ACCURACY = 1e-9;
-const double LOW_ACCURACY = 1e-3;
+const double STRICT_ACCURACY = 1e-10;
+const double FORGIVING_ACCURACY = 1e-4;
 
 // ---------------------------
 // Helper for comparing doubles
 // ---------------------------
 int double_equal(double a, double b) {
-    return fabs(a - b) < HIGH_ACCURACY;
+    return fabs(a - b) < STRICT_ACCURACY * 10;
 }
 
 // ---------------------------
 // Helper for comparing doubles with less accuracy
 // ---------------------------
 int double_equal_forgiving(double a, double b) {
-    return fabs(a - b) < LOW_ACCURACY;
+    return fabs(a - b) < FORGIVING_ACCURACY * 10;
 }
 
 // ---------------------------
@@ -74,8 +74,21 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_set_get_accuracy) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
-    ck_assert(double_equal(m_get_accuracy(s), HIGH_ACCURACY));
+    m_set_accuracy(s, STRICT_ACCURACY);
+    ck_assert(double_equal(m_get_accuracy(s), STRICT_ACCURACY));
+    ck_assert(m_get_err(s) == SUCCESS);
+    m_free_state(s);
+}
+END_TEST
+
+// ---------------------------
+// m_pi
+// ---------------------------
+START_TEST(test_m_pi) {
+    m_state* s = m_init_state();
+    m_set_accuracy(s, STRICT_ACCURACY);
+    m_pi(s);
+    ck_assert(double_equal(m_get_state(s), 3.141592653589793));
     ck_assert(m_get_err(s) == SUCCESS);
     m_free_state(s);
 }
@@ -87,8 +100,10 @@ END_TEST
 START_TEST(test_m_get_err) {
     m_state* s = m_init_state();
     ck_assert(m_get_err(s) == SUCCESS);
+    m_set_state(s, 5.0);
     m_div(s, 0.0);
     ck_assert(m_get_err(s) == DIVISION_BY_ZERO);
+    ck_assert(double_equal(m_get_state(s), 5.0));
     m_free_state(s);
 }
 END_TEST
@@ -98,7 +113,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_add) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
+    m_set_accuracy(s, STRICT_ACCURACY);
     m_add(s, 0.123456789);
     ck_assert(double_equal(m_get_state(s), 0.123456789));
     m_add(s, 1.0);
@@ -115,7 +130,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_sub) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
+    m_set_accuracy(s, STRICT_ACCURACY);
     m_sub(s, 0.123456789);
     ck_assert(double_equal(m_get_state(s), -0.123456789));
     m_sub(s, 1.0);
@@ -132,7 +147,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_mul) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
+    m_set_accuracy(s, STRICT_ACCURACY);
     m_set_state(s, 0.123456789);
     m_mul(s, 10.0);
     ck_assert(double_equal(m_get_state(s), 1.23456789));
@@ -150,7 +165,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_div) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
+    m_set_accuracy(s, STRICT_ACCURACY);
     m_set_state(s, 0.123456789);
     m_div(s, 10.0);
     ck_assert(double_equal(m_get_state(s), 0.0123456789));
@@ -170,7 +185,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_mod) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
+    m_set_accuracy(s, STRICT_ACCURACY);
     m_set_state(s, 0.123456789);
     m_mod(s, 1);
     ck_assert(double_equal(m_get_state(s), 0.123456789));
@@ -181,6 +196,9 @@ START_TEST(test_m_mod) {
     m_mod(s, 3);
     ck_assert(double_equal(m_get_state(s), -0.987654321));
     ck_assert(m_get_err(s) == SUCCESS);
+    m_set_state(s, -9.0);
+    m_mod(s, 0);
+    ck_assert(m_get_err(s) == DIVISION_BY_ZERO);
     m_free_state(s);
 }
 END_TEST
@@ -190,32 +208,23 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_power) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
+    m_set_accuracy(s, STRICT_ACCURACY);
     m_set_state(s, 2.0);
-    m_power(s, 3.0);
+    m_power(s, 3);
     ck_assert(double_equal(m_get_state(s), 8.0));
-    m_set_state(s, 9.0);
-    m_power(s, 1.5);
-    ck_assert(double_equal(m_get_state(s), 27.0));
     m_set_state(s, 2.0);
-    m_power(s, 0.5);
-    ck_assert(double_equal(m_get_state(s), 1.414213562373));
-    m_set_state(s, 2.0);
-    m_power(s, 0.0);
+    m_power(s, 0);
     ck_assert(double_equal(m_get_state(s), 1.0));
     m_set_state(s, 2.0);
-    m_power(s, -1.0);
+    m_power(s, -1);
     ck_assert(double_equal(m_get_state(s), 0.5));
     m_set_state(s, -2.0);
-    m_power(s, 2.0);
+    m_power(s, 2);
     ck_assert(double_equal(m_get_state(s), 4.0));
     m_set_state(s, -2.0);
-    m_power(s, 3.0);
+    m_power(s, 3);
     ck_assert(double_equal(m_get_state(s), -8.0));
     ck_assert(m_get_err(s) == SUCCESS);
-    m_set_state(s, -2.0);
-    m_power(s, 0.5);
-    ck_assert(m_get_err(s) == NEGATIVE_ROOT);
     m_free_state(s);
 }
 END_TEST
@@ -225,16 +234,16 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_root) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
+    m_set_accuracy(s, STRICT_ACCURACY);
     m_set_state(s, 2.0);
-    m_root(s, 2.0);
+    m_root(s, 2);
     ck_assert(double_equal(m_get_state(s), 1.414213562373));
     ck_assert(m_get_err(s) == SUCCESS);
     m_set_state(s, 2.0);
     m_root(s, -2);
     ck_assert(m_get_err(s) == NON_POSITIVE_NUMBER);
     m_set_state(s, -2.0);
-    m_root(s, 2.0);
+    m_root(s, 2);
     ck_assert(m_get_err(s) == NEGATIVE_ROOT);
     m_free_state(s);
 }
@@ -245,10 +254,13 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_factorial) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, HIGH_ACCURACY);
+    m_set_accuracy(s, STRICT_ACCURACY);
     m_set_state(s, 5.0);
     m_factorial(s);
     ck_assert(double_equal(m_get_state(s), 120.0));
+    m_set_state(s, 0.0);
+    m_factorial(s);
+    ck_assert(double_equal(m_get_state(s), 1.0));
     ck_assert(m_get_err(s) == SUCCESS);
     m_set_state(s, -5.0);
     m_factorial(s);
@@ -265,7 +277,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_sin) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, LOW_ACCURACY);
+    m_set_accuracy(s, FORGIVING_ACCURACY);
     m_set_state(s, 90.0);
     m_sin(s);
     ck_assert(double_equal_forgiving(m_get_state(s), 1.0));
@@ -285,7 +297,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_cos) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, LOW_ACCURACY);
+    m_set_accuracy(s, FORGIVING_ACCURACY);
     m_set_state(s, 0.0);
     m_cos(s);
     ck_assert(double_equal_forgiving(m_get_state(s), 1.0));
@@ -305,7 +317,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_tg) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, LOW_ACCURACY);
+    m_set_accuracy(s, FORGIVING_ACCURACY);
     m_set_state(s, 45.0);
     m_tg(s);
     ck_assert(double_equal_forgiving(m_get_state(s), 1.0));
@@ -328,7 +340,7 @@ END_TEST
 // ---------------------------
 START_TEST(test_m_cotg) {
     m_state* s = m_init_state();
-    m_set_accuracy(s, LOW_ACCURACY);
+    m_set_accuracy(s, FORGIVING_ACCURACY);
     m_set_state(s, 45.0);
     m_cotg(s);
     ck_assert(double_equal_forgiving(m_get_state(s), 1.0));
@@ -357,6 +369,7 @@ Suite* ourmath_suite(void) {
     tcase_add_test(tc_init, test_m_clear);
     tcase_add_test(tc_init, test_m_set_get_state);
     tcase_add_test(tc_init, test_m_set_get_accuracy);
+    tcase_add_test(tc_init, test_m_pi);
     tcase_add_test(tc_init, test_m_get_err);
     suite_add_tcase(s, tc_init);
 
