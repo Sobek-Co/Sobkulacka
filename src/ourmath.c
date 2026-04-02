@@ -55,23 +55,36 @@ void m_set_accuracy(m_state* state, double accuracy) {
     state->error = SUCCESS;
 }
 
-void m_pi(m_state* state) {
-    double arctan(double x, double accuracy) {
-        double result = 0.0;
-        double term = x;
-        double x2 = x * x;
-        int n = 1;
+void m_arctan(m_state* state) {
+    double result = 0.0;
+    double term = state->current;
+    double x2 = state->current * state->current;
+    int n = 1;
 
-        while (term > accuracy || term < -accuracy) {
-            result += term;
-            term *= -x2 * n / (n + 2);
-            n += 2;
-        }
-        return result;
+    while (term > state->accuracy || term < -state->accuracy) {
+        result += term;
+        term *= -x2 * n / (n + 2);
+        n += 2;
     }
+    state->current = result;
+    state->error = SUCCESS;
+}
 
-    state->current = 4.0 * (4.0 * arctan(1.0/5.0,  state->accuracy / 4.0)
-                                -     arctan(1.0/239.0, state->accuracy / 4.0));
+void m_pi(m_state* state) {
+    m_state* temp = m_init_state();
+    m_set_accuracy(temp, state->accuracy / 4.0);
+
+    m_set_state(temp, 1.0/5.0);
+    m_arctan(temp);
+    double a = temp->current;
+
+    m_set_state(temp, 1.0/239.0);
+    m_arctan(temp);
+    double b = temp->current;
+
+    m_free_state(temp);
+
+    state->current = 4.0 * (4.0 * a - b);
     state->error = SUCCESS;
 }
 

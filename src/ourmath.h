@@ -96,6 +96,13 @@ void m_set_state(m_state* state, double value);
 void m_set_accuracy(m_state* state, double accuracy);
 
 /*
+ * @brief Calculates the arctangent of the current value in the state structure.
+ *
+ * @param state Pointer to the state structure.
+ */
+void m_arctan(m_state* state);
+
+/*
  * @brief Sets the current value to π, acoording to accuracy defined in the state structure.
  *
  * @param state Pointer to the state structure.
