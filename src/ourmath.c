@@ -1,12 +1,12 @@
 //======================================================================//
 // Purpose:     Math Library
 //
-// Authors:     David Sobek <xsobekd00@fit.vutbr.cz>
+// Authors:     Vojtěch Vítek <xvitekv00@fit.vutbr.cz>
 // Date:        2026-03-15
 //======================================================================//
 /**
  * @file ourmath.c
- * @author David Sobek <xsobekd00@fit.vutbr.cz>
+ * @author Vojtěch Vítek <xvitekv00@fit.vutbr.cz>
  * 
  * @brief Math Library.
  */
@@ -17,6 +17,7 @@
 m_state* m_init_state() {
     m_state* state = (m_state*)malloc(sizeof(m_state));
     state->current = 0.0;
+    state->accuracy = 0.000001;
     state->error = SUCCESS;
     return state;
 }
@@ -55,22 +56,32 @@ void m_set_accuracy(m_state* state, double accuracy) {
 }
 
 void m_pi(m_state* state) {
-    double pi = 0.0;
-    double term;
-    int n = 0;
+    double arctan(double x, double accuracy) {
+        double result = 0.0;
+        double term = x;
+        double x2 = x * x;
+        int n = 1;
 
-    do {
-        term = (1.0 / (n * 4.0 + 1.0)) - (1.0 / (n * 4.0 + 3.0));
-        pi += term;
-        n++;
-    } while (term > state->accuracy || term < -state->accuracy);
+        while (term > accuracy || term < -accuracy) {
+            result += term;
+            term *= -x2 * n / (n + 2);
+            n += 2;
+        }
+        return result;
+    }
 
-    state->current = pi * 4.0;
+    state->current = 4.0 * (4.0 * arctan(1.0/5.0,  state->accuracy / 4.0)
+                                -     arctan(1.0/239.0, state->accuracy / 4.0));
     state->error = SUCCESS;
 }
 
 void m_round(m_state* state) {
-    // doplnit
+    if (state->current >= 0) {
+        state->current = (int)(state->current + 0.5);
+    } else {
+        state->current = (int)(state->current - 0.5);
+    }
+    state->error = SUCCESS;
 }
 
 void m_add(m_state* state, double value) {
@@ -103,18 +114,20 @@ void m_div(m_state* state, double value) {
 }
 
 void m_mod(m_state* state, int value) {
-    if (state->current != (int)state->current) {
-        state->error = NON_INTEGER_NUMBER;
-        return;
-    }
-
     if (value == 1) {
         state->error = SUCCESS;
         state->current = 0;
         return;
     }
 
-    state->current = (double)((int)state->current % value);
+    double floor;
+    if (state->current >= 0) {
+        floor = (int)(state->current / value);
+    } else {
+        floor = (int)(state->current / value) - 1;
+    }
+
+    state->current = state->current - (value * floor);
     state->error = SUCCESS;
 }
 
@@ -245,13 +258,17 @@ void m_cos(m_state* state) {
 
 void m_tg(m_state* state) {
     m_state* temp_state = m_init_state();
+
     m_set_state(temp_state, state->current);
     m_set_accuracy(temp_state, state->accuracy);
-    
     m_sin(temp_state);
     double sin_value = temp_state->current;
+
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
     m_cos(temp_state);
     double cos_value = temp_state->current;
+
     m_free_state(temp_state);
 
     if (cos_value == 0) {
@@ -265,13 +282,17 @@ void m_tg(m_state* state) {
 
 void m_cotg(m_state* state) {
     m_state* temp_state = m_init_state();
+
     m_set_state(temp_state, state->current);
     m_set_accuracy(temp_state, state->accuracy);
-
     m_sin(temp_state);
     double sin_value = temp_state->current;
+
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
     m_cos(temp_state);
     double cos_value = temp_state->current;
+    
     m_free_state(temp_state);
 
     if (sin_value == 0) {

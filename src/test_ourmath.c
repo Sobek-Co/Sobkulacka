@@ -162,6 +162,7 @@ END_TEST
 START_TEST(test_m_sin) {
     m_state* s = m_init_state();
     m_set_state(s, 90.0);
+    m_set_accuracy(s, 0.0000001);
     m_sin(s);
     ck_assert(double_equal(m_get_state(s), 1.0));
 }
@@ -173,6 +174,7 @@ END_TEST
 START_TEST(test_m_cos) {
     m_state* s = m_init_state();
     m_set_state(s, 180.0);
+    m_set_accuracy(s, 0.0000001);
     m_cos(s);
     ck_assert(double_equal(m_get_state(s), -1.0));
 }
@@ -184,6 +186,7 @@ END_TEST
 START_TEST(test_m_tg) {
     m_state* s = m_init_state();
     m_set_state(s, 45.0);
+    m_set_accuracy(s, 0.0001);
     m_tg(s);
     ck_assert(double_equal(m_get_state(s), 1.0));
 }
@@ -195,6 +198,7 @@ END_TEST
 START_TEST(test_m_cotg) {
     m_state* s = m_init_state();
     m_set_state(s, 45.0);
+    m_set_accuracy(s, 0.0000001);
     m_cotg(s);
     ck_assert(double_equal(m_get_state(s), 1.0));
 }
