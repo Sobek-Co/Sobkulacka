@@ -51,7 +51,7 @@ deps:
 			libgtk-4-common \
 			libadwaita-1-dev \
 			libgdk-pixbuf-2.0-dev \
-			libgobject-introspection1.0-dev \
+			libgirepository1.0-dev \
 			pkg-config \
 			gcc \
 			make \
