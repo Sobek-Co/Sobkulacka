@@ -61,7 +61,9 @@ jobs:
         run: |
           cd src
           make deps
-          make all
+          mkdir -p ./build
+          go mod tidy
+          go build -o ./build/app -x
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3
