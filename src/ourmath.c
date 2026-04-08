@@ -231,6 +231,29 @@ void m_factorial(m_state* state) {
 
 void m_sin(m_state* state) {
     m_state* temp_state = m_init_state();
+    m_set_accuracy(temp_state, state->accuracy);
+    m_set_state(temp_state, state->current);
+
+    m_mod(temp_state, 360.0);
+
+    if (temp_state->current == 0 || temp_state->current == 180) {
+        state->current = 0;
+        state->error = SUCCESS;
+        return;
+    }
+
+    if (temp_state->current == 90) {
+        state->current = 1;
+        state->error = SUCCESS;
+        return;
+    }
+
+    if (temp_state->current == 270) {
+        state->current = -1;
+        state->error = SUCCESS;
+        return;
+    }
+
     m_pi(temp_state);
     double radians = state->current * temp_state->current / 180.0;
     m_free_state(temp_state);
@@ -251,6 +274,29 @@ void m_sin(m_state* state) {
 
 void m_cos(m_state* state) {
     m_state* temp_state = m_init_state();
+    m_set_accuracy(temp_state, state->accuracy);
+    m_set_state(temp_state, state->current);
+
+    m_mod(temp_state, 360.0);
+
+    if (temp_state->current == 0) {
+        state->current = 1;
+        state->error = SUCCESS;
+        return;
+    }
+
+    if (temp_state->current == 90 || temp_state->current == 270) {
+        state->current = 0;
+        state->error = SUCCESS;
+        return;
+    }
+
+    if (temp_state->current == 180) {
+        state->current = -1;
+        state->error = SUCCESS;
+        return;
+    }
+
     m_pi(temp_state);
     double radians = state->current * temp_state->current / 180.0;
     m_free_state(temp_state);
@@ -271,6 +317,37 @@ void m_cos(m_state* state) {
 
 void m_tg(m_state* state) {
     m_state* temp_state = m_init_state();
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
+
+    m_mod(temp_state, 360.0);
+
+    if (temp_state->current == 0 || temp_state->current == 180) {
+        state->current = 0;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 45 || temp_state->current == 225) {
+        state->current = 1;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 90 || temp_state->current == 270) {
+        state->error = UNDEFINED_VALUE;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 135 || temp_state->current == 315) {
+        state->current = -1;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
 
     m_set_state(temp_state, state->current);
     m_set_accuracy(temp_state, state->accuracy);
@@ -285,7 +362,7 @@ void m_tg(m_state* state) {
     m_free_state(temp_state);
 
     if (cos_value == 0) {
-        state->error = DIVISION_BY_ZERO;
+        state->error = UNDEFINED_VALUE;
         return;
     }
 
@@ -295,6 +372,37 @@ void m_tg(m_state* state) {
 
 void m_cotg(m_state* state) {
     m_state* temp_state = m_init_state();
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
+
+    m_mod(temp_state, 360.0);
+
+    if (temp_state->current == 0 || temp_state->current == 180) {
+        state->error = UNDEFINED_VALUE;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 45 || temp_state->current == 225) {
+        state->current = 1;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 90 || temp_state->current == 270) {
+        state->current = 0;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 135 || temp_state->current == 315) {
+        state->current = -1;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
 
     m_set_state(temp_state, state->current);
     m_set_accuracy(temp_state, state->accuracy);
@@ -309,7 +417,7 @@ void m_cotg(m_state* state) {
     m_free_state(temp_state);
 
     if (sin_value == 0) {
-        state->error = DIVISION_BY_ZERO;
+        state->error = UNDEFINED_VALUE;
         return;
     }
 

@@ -23,6 +23,7 @@ typedef enum {
     NON_INTEGER_NUMBER,
     NON_POSITIVE_NUMBER,
     NEGATIVE_ROOT,
+    UNDEFINED_VALUE,
 } m_err;
 
 /*
