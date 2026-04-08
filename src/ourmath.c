@@ -239,18 +239,21 @@ void m_sin(m_state* state) {
     if (temp_state->current == 0 || temp_state->current == 180) {
         state->current = 0;
         state->error = SUCCESS;
+        free(temp_state);
         return;
     }
 
     if (temp_state->current == 90) {
         state->current = 1;
         state->error = SUCCESS;
+        free(temp_state);
         return;
     }
 
     if (temp_state->current == 270) {
         state->current = -1;
         state->error = SUCCESS;
+        free(temp_state);
         return;
     }
 
@@ -282,18 +285,21 @@ void m_cos(m_state* state) {
     if (temp_state->current == 0) {
         state->current = 1;
         state->error = SUCCESS;
+        free(temp_state);
         return;
     }
 
     if (temp_state->current == 90 || temp_state->current == 270) {
         state->current = 0;
         state->error = SUCCESS;
+        free(temp_state);
         return;
     }
 
     if (temp_state->current == 180) {
         state->current = -1;
         state->error = SUCCESS;
+        free(temp_state);
         return;
     }
 
