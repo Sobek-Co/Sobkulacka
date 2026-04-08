@@ -116,7 +116,7 @@ test: check_install
 	mkdir -p $(BUILD_DIR)
 	$(CC) -o $(BUILD_DIR)/test_program \
 		$(CFLAGS) $(CHECK_CFLAGS) \
-		ourmath.c test/test_ourmath.c \
+		ourmath.c test_ourmath.c \
 		$(CHECK_LIBS) -pthread -lrt -lm
 	$(BUILD_DIR)/test_program
 
