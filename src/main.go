@@ -217,6 +217,7 @@ window {
 			btn := gtk.NewButtonWithLabel(key)
 			btn.SetVExpand(true)
 			btn.SetHExpand(true)
+			btn.SetCanFocus(false)
 
 			switch key {
 			case "+", "-", "*", "/":
