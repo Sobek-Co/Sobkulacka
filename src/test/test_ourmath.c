@@ -13,7 +13,7 @@
 
 #include <check.h>
 #include <math.h>
-#include "ourmath.h"
+#include "../ourmath.h"
 
 // ---------------------------
 // Helper for comparing doubles

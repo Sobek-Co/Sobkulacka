@@ -2,6 +2,48 @@
 
 Davidova kalkulačka
 
+## Installation instuctions
+
+### Debian
+
+To install on a debian based system, run these commands, replacing `stable` for `dev` if you are interested in development/testing builds:
+
+```bash
+sudo curl https://git.sleepat.fit/api/packages/SobekCo/debian/repository.key -o /etc/apt/keyrings/forgejo-SobekCo.asc
+echo "deb [signed-by=/etc/apt/keyrings/forgejo-SobekCo.asc] https://git.sleepat.fit/api/packages/SobekCo/debian stable main" | sudo tee -a /etc/apt/sources.list.d/forgejo.list
+sudo apt update
+```
+
+After that you can simply run this command to install the program:
+
+```bash
+sudo apt install sobkulacka
+```
+
+### Arch
+
+Installation on arch is similar, run these commands to install the required signing key:
+
+```bash
+wget -O sign.gpg https://git.sleepat.fit/api/packages/SobekCo/arch/repository.key
+sudo pacman-key --add sign.gpg
+sudo pacman-key --lsign-key 'SobekCo@noreply.git.sleepat.fit'
+```
+
+Then add this to the bottom of your `/etc/pacman.conf` file:
+
+```bash
+[sobekco.git.sleepat.fit]
+SigLevel = Required
+Server = https://git.sleepat.fit/api/packages/SobekCo/arch/extra/$arch
+```
+
+After that you can run this command to install the program:
+
+```bash
+sudo pacman -Sy sobkulacka
+```
+
 ## Jak přispět/interagovat s tímto repositářem
 
 Vysoce doporučuji nejdříve přečíst celý návod, než začnete cokoliv dělat.
