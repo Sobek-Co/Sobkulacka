@@ -65,13 +65,17 @@ jobs:
           go mod tidy
           go build -o ./build/app -x
 
+      - name: Prepare artifact
+        run: |
+          mkdir -p artifact
+          cp src/build/app artifact/
+          cp assets/sobekco.png artifact/
+
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3
         with:
           name: app-binary
-          path: |
-            src/build/app
-            assets/sobekco.png
+          path: artifact/
 
   package-debian:
     needs: build
@@ -97,7 +101,7 @@ jobs:
           chmod +x dist/app
           mkdir -p dist/share/applications
           mkdir -p dist/share/icons/hicolor/512x512/apps
-          mv sobekco.png dist/share/icons/hicolor/512x512/apps/sobekco.png
+          mv dist/sobekco.png dist/share/icons/hicolor/512x512/apps/sobekco.png
           cat > dist/share/applications/sobkulacka.desktop << 'EOF'
           [Desktop Entry]
           Type=Application
