@@ -17,6 +17,7 @@
 
 const double STRICT_ACCURACY = 1e-10;
 const double FORGIVING_ACCURACY = 1e-4;
+// printf("__________________________________ test: %lf\n", m_get_state(s));
 
 // ---------------------------
 // Helper for comparing doubles
@@ -186,6 +187,9 @@ END_TEST
 START_TEST(test_m_mod) {
     m_state* s = m_init_state();
     m_set_accuracy(s, STRICT_ACCURACY);
+    m_set_state(s, 10.0);
+    m_mod(s, 3);
+    ck_assert(double_equal(m_get_state(s), 1.0));
     m_set_state(s, 0.123456789);
     m_mod(s, 1);
     ck_assert(double_equal(m_get_state(s), 0.123456789));
@@ -330,7 +334,7 @@ START_TEST(test_m_tg) {
     ck_assert(m_get_err(s) == SUCCESS);
     m_set_state(s, 90.0);
     m_tg(s);
-    ck_assert(m_get_err(s) == DIVISION_BY_ZERO);
+    ck_assert(m_get_err(s) == UNDEFINED_VALUE);
     m_free_state(s);
 }
 END_TEST
@@ -353,7 +357,7 @@ START_TEST(test_m_cotg) {
     ck_assert(m_get_err(s) == SUCCESS);
     m_set_state(s, 0.0);
     m_cotg(s);
-    ck_assert(m_get_err(s) == DIVISION_BY_ZERO);
+    ck_assert(m_get_err(s) == UNDEFINED_VALUE);
     m_free_state(s);
 }
 END_TEST
