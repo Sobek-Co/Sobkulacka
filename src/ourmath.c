@@ -122,12 +122,6 @@ void m_div(m_state* state, double value) {
 }
 
 void m_mod(m_state* state, int value) {
-    if (value == 1) {
-        state->error = SUCCESS;
-        state->current = 0;
-        return;
-    }
-
     if (value == 0) {
         state->error = DIVISION_BY_ZERO;
         return;
@@ -167,7 +161,7 @@ void m_power(m_state* state, int value) {
 
     if (value < 0) {
         m_state* temp_state = m_init_state();
-        m_power(temp_state, -value);
+        m_power(temp_state, value * -1);
 
         state->current = 1 / temp_state->current;
         state->error = SUCCESS;
