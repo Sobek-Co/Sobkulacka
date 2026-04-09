@@ -117,11 +117,6 @@ void m_div(m_state* state, double value) {
         return;
     }
 
-    if (value == 1) {
-        state->error = SUCCESS;
-        return;
-    }
-
     state->current = state->current / value;
     state->error = SUCCESS;
 }
@@ -133,8 +128,13 @@ void m_mod(m_state* state, int value) {
         return;
     }
 
+    if (value == 0) {
+        state->error = DIVISION_BY_ZERO;
+        return;
+    }
+
     double floor;
-    if (state->current >= 0) {
+    if (state->current > 0) {
         floor = (int)(state->current / value);
     } else {
         floor = (int)(state->current / value) - 1;
