@@ -1,12 +1,12 @@
 //======================================================================//
 // Purpose:     Math Library
 //
-// Authors:     David Sobek <xsobekd00@fit.vutbr.cz>
+// Authors:     Vojtěch Vítek <xvitekv00@fit.vutbr.cz>
 // Date:        2026-03-15
 //======================================================================//
 /**
  * @file ourmath.c
- * @author David Sobek <xsobekd00@fit.vutbr.cz>
+ * @author Vojtěch Vítek <xvitekv00@fit.vutbr.cz>
  * 
  * @brief Math Library.
  */
@@ -17,6 +17,7 @@
 m_state* m_init_state() {
     m_state* state = (m_state*)malloc(sizeof(m_state));
     state->current = 0.0;
+    state->accuracy = 0.000001;
     state->error = SUCCESS;
     return state;
 }
@@ -54,23 +55,46 @@ void m_set_accuracy(m_state* state, double accuracy) {
     state->error = SUCCESS;
 }
 
+void m_arctan(m_state* state) {
+    double result = 0.0;
+    double term = state->current;
+    double x2 = state->current * state->current;
+    int n = 1;
+
+    while (term > state->accuracy || term < -state->accuracy) {
+        result += term;
+        term *= -x2 * n / (n + 2);
+        n += 2;
+    }
+    state->current = result;
+    state->error = SUCCESS;
+}
+
 void m_pi(m_state* state) {
-    double pi = 0.0;
-    double term;
-    int n = 0;
+    m_state* temp = m_init_state();
+    m_set_accuracy(temp, state->accuracy / 4.0);
 
-    do {
-        term = (1.0 / (n * 4.0 + 1.0)) - (1.0 / (n * 4.0 + 3.0));
-        pi += term;
-        n++;
-    } while (term > state->accuracy || term < -state->accuracy);
+    m_set_state(temp, 1.0/5.0);
+    m_arctan(temp);
+    double a = temp->current;
 
-    state->current = pi * 4.0;
+    m_set_state(temp, 1.0/239.0);
+    m_arctan(temp);
+    double b = temp->current;
+
+    m_free_state(temp);
+
+    state->current = 4.0 * (4.0 * a - b);
     state->error = SUCCESS;
 }
 
 void m_round(m_state* state) {
-    // doplnit
+    if (state->current >= 0) {
+        state->current = (int)(state->current + 0.5);
+    } else {
+        state->current = (int)(state->current - 0.5);
+    }
+    state->error = SUCCESS;
 }
 
 void m_add(m_state* state, double value) {
@@ -103,18 +127,20 @@ void m_div(m_state* state, double value) {
 }
 
 void m_mod(m_state* state, int value) {
-    if (state->current != (int)state->current) {
-        state->error = NON_INTEGER_NUMBER;
-        return;
-    }
-
     if (value == 1) {
         state->error = SUCCESS;
         state->current = 0;
         return;
     }
 
-    state->current = (double)((int)state->current % value);
+    double floor;
+    if (state->current >= 0) {
+        floor = (int)(state->current / value);
+    } else {
+        floor = (int)(state->current / value) - 1;
+    }
+
+    state->current = state->current - (value * floor);
     state->error = SUCCESS;
 }
 
@@ -205,6 +231,32 @@ void m_factorial(m_state* state) {
 
 void m_sin(m_state* state) {
     m_state* temp_state = m_init_state();
+    m_set_accuracy(temp_state, state->accuracy);
+    m_set_state(temp_state, state->current);
+
+    m_mod(temp_state, 360.0);
+
+    if (temp_state->current == 0 || temp_state->current == 180) {
+        state->current = 0;
+        state->error = SUCCESS;
+        free(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 90) {
+        state->current = 1;
+        state->error = SUCCESS;
+        free(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 270) {
+        state->current = -1;
+        state->error = SUCCESS;
+        free(temp_state);
+        return;
+    }
+
     m_pi(temp_state);
     double radians = state->current * temp_state->current / 180.0;
     m_free_state(temp_state);
@@ -225,6 +277,32 @@ void m_sin(m_state* state) {
 
 void m_cos(m_state* state) {
     m_state* temp_state = m_init_state();
+    m_set_accuracy(temp_state, state->accuracy);
+    m_set_state(temp_state, state->current);
+
+    m_mod(temp_state, 360.0);
+
+    if (temp_state->current == 0) {
+        state->current = 1;
+        state->error = SUCCESS;
+        free(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 90 || temp_state->current == 270) {
+        state->current = 0;
+        state->error = SUCCESS;
+        free(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 180) {
+        state->current = -1;
+        state->error = SUCCESS;
+        free(temp_state);
+        return;
+    }
+
     m_pi(temp_state);
     double radians = state->current * temp_state->current / 180.0;
     m_free_state(temp_state);
@@ -247,15 +325,50 @@ void m_tg(m_state* state) {
     m_state* temp_state = m_init_state();
     m_set_state(temp_state, state->current);
     m_set_accuracy(temp_state, state->accuracy);
-    
+
+    m_mod(temp_state, 360.0);
+
+    if (temp_state->current == 0 || temp_state->current == 180) {
+        state->current = 0;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 45 || temp_state->current == 225) {
+        state->current = 1;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 90 || temp_state->current == 270) {
+        state->error = UNDEFINED_VALUE;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 135 || temp_state->current == 315) {
+        state->current = -1;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
     m_sin(temp_state);
     double sin_value = temp_state->current;
+
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
     m_cos(temp_state);
     double cos_value = temp_state->current;
+
     m_free_state(temp_state);
 
     if (cos_value == 0) {
-        state->error = DIVISION_BY_ZERO;
+        state->error = UNDEFINED_VALUE;
         return;
     }
 
@@ -268,14 +381,49 @@ void m_cotg(m_state* state) {
     m_set_state(temp_state, state->current);
     m_set_accuracy(temp_state, state->accuracy);
 
+    m_mod(temp_state, 360.0);
+
+    if (temp_state->current == 0 || temp_state->current == 180) {
+        state->error = UNDEFINED_VALUE;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 45 || temp_state->current == 225) {
+        state->current = 1;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 90 || temp_state->current == 270) {
+        state->current = 0;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    if (temp_state->current == 135 || temp_state->current == 315) {
+        state->current = -1;
+        state->error = SUCCESS;
+        m_free_state(temp_state);
+        return;
+    }
+
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
     m_sin(temp_state);
     double sin_value = temp_state->current;
+
+    m_set_state(temp_state, state->current);
+    m_set_accuracy(temp_state, state->accuracy);
     m_cos(temp_state);
     double cos_value = temp_state->current;
+    
     m_free_state(temp_state);
 
     if (sin_value == 0) {
-        state->error = DIVISION_BY_ZERO;
+        state->error = UNDEFINED_VALUE;
         return;
     }
 

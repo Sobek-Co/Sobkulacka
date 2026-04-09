@@ -23,6 +23,7 @@ typedef enum {
     NON_INTEGER_NUMBER,
     NON_POSITIVE_NUMBER,
     NEGATIVE_ROOT,
+    UNDEFINED_VALUE,
 } m_err;
 
 /*
@@ -94,6 +95,13 @@ void m_set_state(m_state* state, double value);
  * @param accuracy The accuracy value to be set.
  */
 void m_set_accuracy(m_state* state, double accuracy);
+
+/*
+ * @brief Calculates the arctangent of the current value in the state structure.
+ *
+ * @param state Pointer to the state structure.
+ */
+void m_arctan(m_state* state);
 
 /*
  * @brief Sets the current value to π, acoording to accuracy defined in the state structure.

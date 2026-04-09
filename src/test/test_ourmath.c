@@ -13,7 +13,7 @@
 
 #include <check.h>
 #include <math.h>
-#include "ourmath.h"
+#include "../ourmath.h"
 
 const double STRICT_ACCURACY = 1e-10;
 const double FORGIVING_ACCURACY = 1e-4;
