@@ -76,10 +76,11 @@ func (c *Calculator) clear() {
 }
 
 type CalculatorUI struct {
-	window       *gtk.Window
-	displayLabel *gtk.Label
-	calc         *Calculator
-	buttons      map[string]*gtk.Button
+	window                *gtk.Window
+	displayLabel          *gtk.Label
+	calc                  *Calculator
+	buttons               map[string]*gtk.Button
+	activeOperationButton *gtk.Button
 }
 
 func NewCalculatorUI() *CalculatorUI {
@@ -139,12 +140,41 @@ button.operator-button {
 	padding: 16px;
 	border-radius: 12px;
 	border: none;
+	box-shadow: inset 0 0 0px rgba(255, 255, 255, 0);
+  transition-property: all;
+  transition-duration: 0.25s;
+  transition-timing-function: ease-in-out;
 }
 button.operator-button:hover {
 	opacity: 0.8;
+    border-radius: 12px;
+background: #303136;
+box-shadow: inset 5px 5px 6px #25262a,
+            inset -5px -5px 6px #3b3c42;
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
 }
 button.operator-button:active {
 	opacity: 0.6;
+	color: #ffffff;
+border-radius: 12px;
+background: #303136;
+box-shadow: inset 8px 8px 16px #232327,
+            inset -8px -8px 16px #3d3f45;
+  transition-property: all;
+  transition-duration: 0.1s;
+  transition-timing-function: ease-in-out;
+}
+button.operator-button.active {
+	color: #ffffff;
+border-radius: 12px;
+background: #303136;
+box-shadow: inset 8px 8px 16px #232327,
+            inset -8px -8px 16px #3d3f45;
+  transition-property: all;
+  transition-duration: 0.25s;
+  transition-timing-function: ease-in-out;
 }
 `)
 
@@ -157,12 +187,30 @@ button.equals-button {
 	padding: 16px;
 	border-radius: 12px;
 	border: none;
+  box-shadow: inset 0 0 0px rgba(255, 255, 255, 0);
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
 }
 button.equals-button:hover {
 	opacity: 0.8;
+border-radius: 12px;
+background: #587058;
+box-shadow: inset 5px 5px 6px #445644,
+            inset -5px -5px 6px #6c8a6c;
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
 }
 button.equals-button:active {
 	opacity: 0.6;
+border-radius: 12px;
+background: #587058;
+box-shadow: inset 8px 8px 16px #445644,
+            inset -8px -8px 16px #6c8a6c;
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
 }
 `)
 
@@ -175,12 +223,30 @@ button.clear-button {
 	padding: 16px;
 	border-radius: 12px;
 	border: none;
+  box-shadow: inset 0 0 0px rgba(255, 255, 255, 0);
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
 }
 button.clear-button:hover {
 	opacity: 0.8;
+border-radius: 12px;
+background: #5a3c3c;
+box-shadow: inset 5px 5px 6px #452e2e,
+            inset -5px -5px 6px #6f4a4a;
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
 }
 button.clear-button:active {
 	opacity: 0.6;
+border-radius: 12px;
+background: #5a3c3c;
+box-shadow: inset 8px 8px 16px #452e2e,
+            inset -8px -8px 16px #6f4a4a;
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
 }
 `)
 
@@ -193,12 +259,30 @@ button.number-button {
 	padding: 16px;
 	border-radius: 12px;
 	border: none;
+  box-shadow: inset 0 0 0px rgba(255, 255, 255, 0);
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
 }
 button.number-button:hover {
 	opacity: 0.8;
+    border-radius: 12px;
+background: #303136;
+box-shadow: inset 5px 5px 6px #25262a,
+            inset -5px -5px 6px #3b3c42;
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
 }
 button.number-button:active {
 	opacity: 0.6;
+border-radius: 12px;
+background: #303136;
+box-shadow: inset 8px 8px 16px #232327,
+            inset -8px -8px 16px #3d3f45;
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
 }
 `)
 
@@ -264,10 +348,13 @@ func (ui *CalculatorUI) handleInput(key string) {
 	switch key {
 	case "+", "-", "*", "/":
 		ui.calc.setOperator(key)
+		ui.updateActiveOperationButton(key)
 	case "=":
 		ui.calc.equals()
+		ui.clearActiveOperationButton()
 	case "C":
 		ui.calc.clear()
+		ui.clearActiveOperationButton()
 	default:
 		ui.calc.inputDigit(key)
 	}
@@ -328,6 +415,24 @@ func (ui *CalculatorUI) handleKeyEvent(keyval uint, keycode uint, state gdk.Modi
 
 func (ui *CalculatorUI) updateDisplay() {
 	ui.displayLabel.SetLabel(ui.calc.display)
+}
+
+func (ui *CalculatorUI) updateActiveOperationButton(operation string) {
+	if ui.activeOperationButton != nil {
+		ui.activeOperationButton.RemoveCSSClass("active")
+	}
+
+	if btn, exists := ui.buttons[operation]; exists {
+		btn.AddCSSClass("active")
+		ui.activeOperationButton = btn
+	}
+}
+
+func (ui *CalculatorUI) clearActiveOperationButton() {
+	if ui.activeOperationButton != nil {
+		ui.activeOperationButton.RemoveCSSClass("active")
+		ui.activeOperationButton = nil
+	}
 }
 
 func (ui *CalculatorUI) show() {
