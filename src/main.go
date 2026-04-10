@@ -78,6 +78,8 @@ func (c *Calculator) clear() {
 type CalculatorUI struct {
 	window                *gtk.Window
 	displayLabel          *gtk.Label
+	modeSelector          map[string]*gtk.Button
+	currentMode           int
 	calc                  *Calculator
 	buttons               map[string]*gtk.Button
 	activeOperationButton *gtk.Button
@@ -85,8 +87,9 @@ type CalculatorUI struct {
 
 func NewCalculatorUI() *CalculatorUI {
 	return &CalculatorUI{
-		calc:    NewCalculator(),
-		buttons: make(map[string]*gtk.Button),
+		calc:         NewCalculator(),
+		buttons:      make(map[string]*gtk.Button),
+		modeSelector: make(map[string]*gtk.Button),
 	}
 }
 
@@ -102,6 +105,8 @@ func (ui *CalculatorUI) buildUI() {
 	mainBox.SetMarginTop(8)
 	mainBox.SetMarginBottom(8)
 
+	overlayWidget := gtk.NewOverlay()
+
 	ui.displayLabel = gtk.NewLabel(ui.calc.display)
 	ui.displayLabel.SetHExpand(true)
 	ui.displayLabel.SetVExpand(false)
@@ -109,16 +114,89 @@ func (ui *CalculatorUI) buildUI() {
 	displayProvider := gtk.NewCSSProvider()
 	displayProvider.LoadFromData(`
 label {
-	background-color: #202124;
+border-radius: 12px;
+background: linear-gradient(145deg, #1d1e20, #222327);
+box-shadow:  7px 7px 8px #0d0d0e,
+             -7px -7px 8px #33353a;
 	color: #f5f5f5;
 	font-size: 48px;
 	padding: 24px;
+    margin: 4px;
+    margin-bottom: 8px;
 	border-radius: 12px;
 }
 `)
 	ui.displayLabel.StyleContext().AddProvider(displayProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-	mainBox.Append(ui.displayLabel)
+	overlayWidget.SetChild(ui.displayLabel)
+
+	modeSelectorBox := gtk.NewBox(gtk.OrientationHorizontal, 8)
+	modeSelectorBoxProvider := gtk.NewCSSProvider()
+	modeSelectorBoxProvider.LoadFromData(`
+box.mode_selector {
+  padding: 8px;
+    margin: 0px 0px 0px 6px;
+}
+`)
+	modeSelectorBox.AddCSSClass("mode_selector")
+	modeSelectorBox.StyleContext().AddProvider(modeSelectorBoxProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+	modeSelectorBox.SetHAlign(gtk.AlignStart)
+	modeSelectorBox.SetVAlign(gtk.AlignStart)
+
+	modeButtonProvider := gtk.NewCSSProvider()
+	modeButtonProvider.LoadFromData(`
+button.mode_selector {
+  font-size: 10px;
+    font-weight: bold;
+    border-radius: 22px;
+    padding: 0px;
+    border: 0px solid #00000000;
+    background: #00000000;
+    color: #676767ff;
+}
+button.mode_selector.active {
+  color: #afafafff;
+}
+button.mode_selector:hover {
+  color: #dfdfdfff;
+}
+`)
+
+	simpleMode := gtk.NewButtonWithLabel("SIMPLE")
+	simpleMode.SetVExpand(true)
+	simpleMode.SetHExpand(true)
+	simpleMode.SetCanFocus(false)
+	simpleMode.AddCSSClass("mode_selector")
+	simpleMode.AddCSSClass("active")
+	simpleMode.StyleContext().AddProvider(modeButtonProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+	simpleMode.ConnectClicked(func() {
+		ui.modeSelector["simple"].AddCSSClass("active")
+		ui.modeSelector["advanced"].RemoveCSSClass("active")
+		ui.currentMode = 0
+		ui.updateDisplay()
+	})
+	ui.modeSelector["simple"] = simpleMode
+
+	advancedMode := gtk.NewButtonWithLabel("ADVANCED")
+	advancedMode.SetVExpand(true)
+	advancedMode.SetHExpand(true)
+	advancedMode.SetCanFocus(false)
+	advancedMode.AddCSSClass("mode_selector")
+	advancedMode.StyleContext().AddProvider(modeButtonProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+	advancedMode.ConnectClicked(func() {
+		ui.modeSelector["advanced"].AddCSSClass("active")
+		ui.modeSelector["simple"].RemoveCSSClass("active")
+		ui.currentMode = 1
+		ui.updateDisplay()
+	})
+	ui.modeSelector["advanced"] = advancedMode
+
+	modeSelectorBox.Append(simpleMode)
+	modeSelectorBox.Append(advancedMode)
+
+	overlayWidget.AddOverlay(modeSelectorBox)
+
+	mainBox.Append(overlayWidget)
 
 	gridBox := gtk.NewBox(gtk.OrientationVertical, 8)
 	gridBox.SetVExpand(true)
@@ -289,7 +367,8 @@ box-shadow: inset 8px 8px 16px #232327,
 	windowProvider := gtk.NewCSSProvider()
 	windowProvider.LoadFromData(`
 window {
-	background-color: #0d0d0d;
+	background-color: #202124;
+  padding: 4px;
 }
 `)
 
