@@ -3,7 +3,7 @@ name: Build and Publish Packages
 on:
   push:
     branches:
-      - '**'
+      - "**"
 
 jobs:
   build:
@@ -11,10 +11,10 @@ jobs:
     container:
       image: ghcr.io/catthehacker/ubuntu:act-24.04
     outputs:
-      version:      ${{ steps.version.outputs.version }}
-      deb_version:  ${{ steps.version.outputs.deb_version }}
+      version: ${{ steps.version.outputs.version }}
+      deb_version: ${{ steps.version.outputs.deb_version }}
       arch_version: ${{ steps.version.outputs.arch_version }}
-      channel:      ${{ steps.version.outputs.channel }}
+      channel: ${{ steps.version.outputs.channel }}
 
     steps:
       - name: Checkout repository
@@ -62,13 +62,21 @@ jobs:
         run: |
           cd src
           make deps
-          make all
+          mkdir -p ./build
+          go mod tidy
+          go build -o ./build/app -x
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p artifact
+          cp src/build/app artifact/
+          cp assets/sobekco.png artifact/
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3
         with:
           name: app-binary
-          path: src/build/app
+          path: artifact/
 
   package-debian:
     needs: build
@@ -92,6 +100,18 @@ jobs:
       - name: Build .deb package
         run: |
           chmod +x dist/app
+          mkdir -p dist/share/applications
+          mkdir -p dist/share/icons/hicolor/512x512/apps
+          mv dist/sobekco.png dist/share/icons/hicolor/512x512/apps/sobekco.png
+          cat > dist/share/applications/sobkulacka.desktop << 'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=Sobkulačka
+          Comment=Davidova Sobkulačka
+          Exec=sobkulacka
+          Icon=sobekco
+          Categories=Utility;
+          EOF
           fpm \
             -s dir \
             -t deb \
@@ -101,7 +121,9 @@ jobs:
             --maintainer "${{ github.repository_owner }}" \
             --url "${{ github.server_url }}/${{ github.repository }}" \
             --license "GPL-3.0-only" \
-            dist/app=/usr/bin/sobkulacka
+            dist/app=/usr/bin/sobkulacka \
+            dist/share/applications/sobkulacka.desktop=/usr/share/applications/sobkulacka.desktop \
+            dist/share/icons/hicolor/512x512/apps/sobekco.png=/usr/share/icons/hicolor/512x512/apps/sobekco.png
 
       - name: Publish to Forgejo Debian registry
         run: |
@@ -138,6 +160,19 @@ jobs:
           mkdir -p $STAGING/usr/bin
           cp dist/app $STAGING/usr/bin/$PKGNAME
           chmod 755 $STAGING/usr/bin/$PKGNAME
+
+          mkdir -p $STAGING/usr/share/applications
+          mkdir -p $STAGING/usr/share/icons/hicolor/512x512/apps
+          cp dist/sobekco.png $STAGING/usr/share/icons/hicolor/512x512/apps/sobekco.png
+          cat > $STAGING/usr/share/applications/sobkulacka.desktop << 'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=Sobkulačka
+          Comment=Davidova Sobkulačka
+          Exec=sobkulacka
+          Icon=sobekco
+          Categories=Utility;
+          EOF
 
           SIZE=$(du -sb $STAGING/usr/bin/$PKGNAME | cut -f1)
           BUILDDATE=$(date +%s)
