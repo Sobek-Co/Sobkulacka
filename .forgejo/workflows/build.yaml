@@ -41,9 +41,10 @@ jobs:
           echo "git describe: $(git describe)"
 
           if [ "${GITHUB_REF_NAME}" = "master" ]; then
+            ARCH_BASE=$(echo "${BASE}" | sed 's/^v//' | cut -d '-' -f -2 | tr '-' '_')
             echo "version=${BASE}"       >> $GITHUB_OUTPUT
             echo "deb_version=${BASE}"   >> $GITHUB_OUTPUT
-            echo "arch_version=${BASE}"  >> $GITHUB_OUTPUT
+            echo "arch_version=${ARCH_BASE}"  >> $GITHUB_OUTPUT
             echo "channel=stable"        >> $GITHUB_OUTPUT
           else
             BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr -cd '[:alnum:]-' | cut -c1-20)
