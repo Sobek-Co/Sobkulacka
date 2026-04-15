@@ -61,6 +61,7 @@ deps:
 		sudo dnf install -y \
 			golang \
 			check \
+            check-devel \
 			gtk4-devel \
 			libadwaita-devel \
 			gdk-pixbuf2-devel \
