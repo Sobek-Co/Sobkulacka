@@ -16,6 +16,9 @@ CHECK_LIBS   := $(shell pkg-config --libs check 2>/dev/null)
 # ---- OS detection ----
 PKG_MANAGER := $(shell command -v pacman || command -v apt || command -v dnf)
 
+# ---- Phony targets ----
+.PHONY: all clean deps test run help doc
+
 # ---- Main target ----
 all:
 	mkdir -p $(BUILD_DIR)
@@ -132,3 +135,9 @@ help:
 	@echo "  test     - Run C tests"
 	@echo "  run      - Run built app"
 	@echo "  clean    - Remove build directory"
+
+# ---- Doc ----
+
+doc:
+	export PROJECT_NUMBER=$(git describe)
+	doxygen Doxyfile
