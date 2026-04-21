@@ -127,12 +127,7 @@ void m_mod(m_state* state, int value) {
         return;
     }
 
-    double floor;
-    if (state->current > 0) {
-        floor = (int)(state->current / value);
-    } else {
-        floor = (int)(state->current / value) - 1;
-    }
+    double floor = (int)(state->current / value);
 
     state->current = state->current - (value * floor);
     state->error = SUCCESS;
@@ -144,8 +139,18 @@ void m_power(m_state* state, int value) {
         state->error = SUCCESS;
         return;
     }
+    
+    if (value == 1) {
+        state->error = SUCCESS;
+        return;
+    }
 
-    if (value == 0) {
+    if (value == -1) {
+        if (state->current == 0) {
+            state->error = DIVISION_BY_ZERO;
+            return;
+        }
+        state->current = 1 / state->current;
         state->error = SUCCESS;
         return;
     }
