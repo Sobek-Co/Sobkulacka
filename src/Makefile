@@ -4,6 +4,8 @@ CC = gcc
 
 BUILD_DIR = ./build
 
+DOC_DIR = ../doc
+
 SRC = $(wildcard *.c)
 
 GO_SRC_DIR = .
@@ -25,7 +27,7 @@ all:
 	cd $(GO_SRC_DIR) && go build -o $(GO_BUILD_OUT)
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) $(DOC_DIR)
 
 # ---- Dependencies ----
 
