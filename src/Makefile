@@ -4,6 +4,8 @@ CC = gcc
 
 BUILD_DIR = ./build
 
+DOC_DIR = ../doc
+
 SRC = $(wildcard *.c)
 
 GO_SRC_DIR = .
@@ -16,13 +18,16 @@ CHECK_LIBS   := $(shell pkg-config --libs check 2>/dev/null)
 # ---- OS detection ----
 PKG_MANAGER := $(shell command -v pacman || command -v apt || command -v dnf)
 
+# ---- Phony targets ----
+.PHONY: all clean deps test run help doc
+
 # ---- Main target ----
 all:
 	mkdir -p $(BUILD_DIR)
 	cd $(GO_SRC_DIR) && go mod tidy && go build -o $(GO_BUILD_OUT)
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) $(DOC_DIR)
 
 # ---- Dependencies ----
 
@@ -107,3 +112,9 @@ help:
 	@echo "  test     - Run C tests"
 	@echo "  run      - Run built app"
 	@echo "  clean    - Remove build directory"
+
+# ---- Doc ----
+
+doc:
+	export PROJECT_NUMBER=$(git describe)
+	doxygen Doxyfile
