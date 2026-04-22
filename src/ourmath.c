@@ -127,9 +127,9 @@ void m_mod(m_state* state, int value) {
         return;
     }
 
-    double floor = (int)(state->current / value);
+    double trunc = (int)(state->current / value);
 
-    state->current = state->current - (value * floor);
+    state->current = state->current - (value * trunc);
     state->error = SUCCESS;
 }
 
