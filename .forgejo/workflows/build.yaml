@@ -3,7 +3,7 @@ name: Build and Publish Packages
 on:
   push:
     branches:
-      - "**"
+      - "master"
 
 jobs:
   build:
@@ -40,23 +40,10 @@ jobs:
 
           echo "git describe: $(git describe)"
 
-          if [ "${GITHUB_REF_NAME}" = "master" ]; then
-            ARCH_BASE=$(echo "${BASE}" | sed 's/^v//' | cut -d '-' -f -2 | tr '-' '_')
-            echo "version=${BASE}"       >> $GITHUB_OUTPUT
-            echo "deb_version=${BASE}"   >> $GITHUB_OUTPUT
-            echo "arch_version=${ARCH_BASE}"  >> $GITHUB_OUTPUT
-            echo "channel=stable"        >> $GITHUB_OUTPUT
-          else
-            BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr -cd '[:alnum:]-' | cut -c1-20)
-
-            ARCH_BRANCH=$(echo "${BRANCH}" | tr '-' '.')
-            ARCH_BASE=$(echo "${BASE}" | sed 's/^v//' | tr '-' '.')
-
-            echo "version=${BASE}-dev.${BRANCH}"       >> $GITHUB_OUTPUT
-            echo "deb_version=${BASE}~dev.${BRANCH}"   >> $GITHUB_OUTPUT
-            echo "arch_version=${ARCH_BASE}.dev.${ARCH_BRANCH}"  >> $GITHUB_OUTPUT
-            echo "channel=dev"                                >> $GITHUB_OUTPUT
-          fi
+          ARCH_BASE=$(echo "${BASE}" | sed 's/^v//' | cut -d '-' -f -2 | tr '-' '_')
+          echo "version=${BASE}" >> $GITHUB_OUTPUT
+          echo "deb_version=${BASE}" >> $GITHUB_OUTPUT
+          echo "arch_version=${ARCH_BASE}" >> $GITHUB_OUTPUT
 
       - name: Install dependencies and build
         run: |
@@ -127,13 +114,12 @@ jobs:
 
       - name: Publish to Forgejo Debian registry
         run: |
-          CHANNEL="${{ needs.build.outputs.channel }}"
           DEB=$(ls sobkulacka_*.deb | head -1)
           curl --fail \
             -H "Authorization: token ${{ secrets.PACKAGES_TOKEN }}" \
             -X PUT \
             --upload-file "${DEB}" \
-            "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/debian/pool/${CHANNEL}/main/upload"
+            "${{ github.server_url }}/api/packages/${{ github.repository_owner }}/debian/pool/stable/main/upload"
 
   package-arch:
     needs: build
