@@ -319,14 +319,14 @@ button.mode_selector:hover {
 	ui.formulaLabel = gtk.NewLabel("")
 	ui.formulaLabel.SetHAlign(gtk.AlignEnd)
 	ui.formulaLabel.SetVAlign(gtk.AlignEnd)
-	ui.formulaLabel.SetMarginEnd(12)
-	ui.formulaLabel.SetMarginBottom(12)
+	ui.formulaLabel.SetMarginEnd(16)
+	ui.formulaLabel.SetMarginBottom(16)
 
 	formulaLabelProvider := gtk.NewCSSProvider()
 	formulaLabelProvider.LoadFromData(`
 label {
 	color: #707070ff;
-	font-size: 12px;
+	font-size: 18px;
 	font-weight: normal;
 }
 `)
