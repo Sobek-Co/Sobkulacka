@@ -6,28 +6,108 @@ import (
 	"strconv"
 )
 
-// type ExpTreeNode struct {
-// 	value string
-// 	left  *ExpTreeNode
-// 	right *ExpTreeNode
-// }
-
-// func NewExpTreeNode(value string) *ExpTreeNode {
-// 	return &ExpTreeNode{
-// 		value: value,
-// 	}
-// }
-
-// *** A simple stack implementation using a slice ******
-type stack []string
-
-func (s *stack) push(str string) {
-	*s = append(*s, str)
+type ExpTreeNode struct {
+	value string
+	left  *ExpTreeNode
+	right *ExpTreeNode
 }
 
-func (s *stack) pop() (string, error) {
+func NewExpTreeNode(token string) *ExpTreeNode {
+	return &ExpTreeNode{
+		value: token,
+	}
+}
+
+//************ AI generated code **********************//
+
+// Postorder traversal: Left -> Right -> Root (postfix notation)
+func (node *ExpTreeNode) Postorder() string {
+	if node == nil {
+		return ""
+	}
+
+	if node.left == nil && node.right == nil {
+		return node.value
+	}
+
+	left := node.left.Postorder()
+	right := node.right.Postorder()
+	result := left
+	if left != "" {
+		result += " "
+	}
+	if right != "" {
+		result += right + " "
+	}
+	return result + node.value
+}
+
+// PrintTree prints the tree in a visual format
+func (node *ExpTreeNode) PrintTree(prefix string, isLeft bool) {
+	if node == nil {
+		return
+	}
+
+	fmt.Print(prefix)
+	if isLeft {
+		fmt.Print("├── ")
+	} else {
+		fmt.Print("└── ")
+	}
+	fmt.Println(node.value)
+
+	if node.left != nil || node.right != nil {
+		if node.left != nil {
+			newPrefix := prefix
+			if isLeft {
+				newPrefix += "│   "
+			} else {
+				newPrefix += "    "
+			}
+			node.left.PrintTree(newPrefix, true)
+		}
+		if node.right != nil {
+			newPrefix := prefix
+			if isLeft {
+				newPrefix += "│   "
+			} else {
+				newPrefix += "    "
+			}
+			node.right.PrintTree(newPrefix, false)
+		}
+	}
+}
+
+//******************************************************
+
+func create_subtree(node_stack *Stack[*ExpTreeNode], operator string) {
+	if operator == "" {
+		fmt.Println("Error: Invalid operator")
+		return
+	}
+	op_node := NewExpTreeNode(operator)
+	rightNode, errL := node_stack.pop()
+	leftNode, errR := node_stack.pop()
+	if errL != nil || errR != nil {
+		fmt.Println("Error: Invalid expression")
+		return
+	}
+	op_node.left = leftNode
+	op_node.right = rightNode
+	node_stack.push(op_node)
+}
+
+// *** A simple stack implementation using a slice ******
+type Stack[T any] []T
+
+func (s *Stack[T]) push(value T) {
+	*s = append(*s, value)
+}
+
+func (s *Stack[T]) pop() (T, error) {
+	var zero T
 	if len(*s) == 0 {
-		return "", fmt.Errorf("stack is empty")
+		return zero, fmt.Errorf("stack is empty")
 	}
 	length := len(*s)
 	top := (*s)[length-1]
@@ -35,9 +115,10 @@ func (s *stack) pop() (string, error) {
 	return top, nil
 }
 
-func (s *stack) top() (string, error) {
+func (s *Stack[T]) top() (T, error) {
+	var zero T
 	if len(*s) == 0 {
-		return "", fmt.Errorf("stack is empty")
+		return zero, fmt.Errorf("stack is empty")
 	}
 	return (*s)[len(*s)-1], nil
 }
@@ -65,19 +146,6 @@ func top_is_precedent(top_op_stack, current_op string) bool {
 	return p1 >= p2
 }
 
-// const (
-// 		Number = iota
-// 		Operator
-// 		LeftParen
-// 		RightParen
-// 	)
-
-// type Token struct {
-
-// 	tokenType int
-// 	tokenStr string
-// }
-
 // Tokenize splits the input string into tokens (numbers, operators, parentheses)
 // Supports multi-digit and floating-point numbers
 func tokenize(expr string) []string {
@@ -92,15 +160,18 @@ func isNumber(token string) bool {
 	return err == nil
 }
 
-func main() {
-	istring := "31.5+4*2.25 /( 1.1 - 5 )"
-	op_stack := make(stack, 0)
-	output := make([]string, 0)
-	fmt.Println("Input:", istring)
+func main1(istring string) {
+	// Get input from command-line arguments or use default
+	
+	
+	op_stack := make(Stack[string], 0)
+	node_stack := make(Stack[*ExpTreeNode], 0)
+	//output := make([]string, 0)
+	
 
 	// Tokenize the input
 	tokens := tokenize(istring)
-	fmt.Println("Tokens:", tokens)
+	
 
 	parenCount := 0
 	// Process each token
@@ -108,14 +179,16 @@ func main() {
 
 		if isNumber(token) {
 			// It's a number - add to output
-			output = append(output, token)
+			node_stack.push(NewExpTreeNode(token))
+			//output = append(output, token)
 
 		} else if token == "+" || token == "-" || token == "*" || token == "/" || token == "^" {
 			// It's an operator
 			stackTop, err := op_stack.top()
 			for err == nil && top_is_precedent(stackTop, token) {
 				topOp, _ := op_stack.pop()
-				output = append(output, topOp)
+				create_subtree(&node_stack, topOp)
+				//output = append(output, topOp)
 				stackTop, err = op_stack.top()
 			}
 			op_stack.push(token)
@@ -140,7 +213,9 @@ func main() {
 				if topOp == "(" {
 					break
 				}
-				output = append(output, topOp)
+				create_subtree(&node_stack, topOp)
+
+				//output = append(output, topOp)
 			}
 			parenCount--
 		} else {
@@ -159,7 +234,25 @@ func main() {
 			fmt.Println("Error: Mismatched parentheses")
 			return
 		}
-		output = append(output, topOp)
+		create_subtree(&node_stack, topOp)
+		//output = append(output, topOp)
 	}
-	fmt.Println("Output (postfix):", output)
+	
+	//Printing the results
+	fmt.Println("Input:", istring)
+	fmt.Println("Tokens:", tokens)
+	//fmt.Println("Output (postfix):", output) // to show postfix you have to uncomment the lines related to output slice
+	
+
+	//*******AI generated code for building the expression tree from postfix tokens*//
+	// Get and print the expression tree
+	if len(node_stack) > 0 {
+		root := node_stack[0]
+		fmt.Println("\n=== Expression Tree ===")
+		fmt.Println("Visual tree:")
+		root.PrintTree("", false)
+
+		fmt.Println("Postfix notation:", root.Postorder())
+	}
+	//*************************************************************************
 }
