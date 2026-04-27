@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "ourmath.h"
+#include "../ourmath.h"
 
 int main(void) {
     double x;

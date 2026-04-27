@@ -106,7 +106,7 @@ stddev:
 	mkdir -p $(BUILD_DIR)
 	$(CC) -o $(BUILD_DIR)/stddev \
 		$(CFLAGS) \
-		stddev.c ourmath.c \
+		ourmath.c profiling/stddev.c \
 		$(LIBS)
 	awk 'BEGIN{srand(); for(i=0;i<1000000;i++) print rand()*1000}' > data_1M.txt
 	$(BUILD_DIR)/stddev < data_1M.txt
