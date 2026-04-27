@@ -4,23 +4,34 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 type Calculator struct {
-	display  string
-	stored   float64
-	operator string
-	newInput bool
+	// Simple mode
+	display   string
+	stored    float64
+	operator  string
+	newInput  bool
+	mathState *State
+
+	// Advanced mode
+	formula      string
+	formulaInput string
+	result       string
 }
 
 func NewCalculator() *Calculator {
 	return &Calculator{
-		display: "0",
+		display:   "0",
+		mathState: NewState(),
 	}
 }
+
+// ========== SIMPLE MODE ==========
 
 func (c *Calculator) inputDigit(d string) {
 	if c.newInput {
@@ -40,20 +51,24 @@ func (c *Calculator) applyOp() {
 
 	switch c.operator {
 	case "+":
-		c.stored += val
+		c.mathState.Add(val)
 	case "-":
-		c.stored -= val
+		c.mathState.Sub(val)
 	case "*":
-		c.stored *= val
+		c.mathState.Mul(val)
 	case "/":
-		if val != 0 {
-			c.stored /= val
-		}
+		c.mathState.Div(val)
 	default:
-		c.stored = val
+		c.mathState.Set(val)
 	}
 
-	c.display = fmt.Sprintf("%g", c.stored)
+	// Check for errors in math library
+	if err := c.mathState.Check(); err != nil {
+		c.display = "Error: " + err.Error()
+		return
+	}
+
+	c.display = fmt.Sprintf("%g", c.mathState.Value())
 }
 
 func (c *Calculator) setOperator(op string) {
@@ -70,14 +85,118 @@ func (c *Calculator) equals() {
 
 func (c *Calculator) clear() {
 	c.display = "0"
-	c.stored = 0
+	c.mathState.Clear()
 	c.operator = ""
 	c.newInput = false
+}
+
+// ========== ADVANCED MODE ==========
+
+func (c *Calculator) inputFormulaChar(char string) {
+	c.formulaInput += char
+}
+
+func (c *Calculator) deleteFormulaChar() {
+	if len(c.formulaInput) > 0 {
+		c.formulaInput = c.formulaInput[:len(c.formulaInput)-1]
+	}
+}
+
+func (c *Calculator) clearFormula() {
+	c.formula = ""
+	c.formulaInput = ""
+	c.result = ""
+	c.mathState.Clear()
+}
+
+func (c *Calculator) getFormulaDisplay() string {
+	if c.formulaInput != "" {
+		return c.formulaInput
+	}
+	return c.result
+}
+
+// evaluateExpressionTree evaluates the expression tree using the math library
+func (c *Calculator) evaluateExpressionTree(node *ExpTreeNode) (float64, error) {
+	if node == nil {
+		return 0, fmt.Errorf("nil node")
+	}
+
+	// If it's a leaf node (number)
+	if node.left == nil && node.right == nil {
+		val, err := strconv.ParseFloat(node.value, 64)
+		if err != nil {
+			return 0, fmt.Errorf("invalid number: %s", node.value)
+		}
+		return val, nil
+	}
+
+	// Evaluate left and right subtrees
+	leftVal, err := c.evaluateExpressionTree(node.left)
+	if err != nil {
+		return 0, err
+	}
+
+	rightVal, err := c.evaluateExpressionTree(node.right)
+	if err != nil {
+		return 0, err
+	}
+
+	// Set initial value and apply operation
+	c.mathState.Set(leftVal)
+
+	switch node.value {
+	case "+":
+		c.mathState.Add(rightVal)
+	case "-":
+		c.mathState.Sub(rightVal)
+	case "*":
+		c.mathState.Mul(rightVal)
+	case "/":
+		c.mathState.Div(rightVal)
+	case "^":
+		// Convert to int for power operation
+		intVal := int(rightVal)
+		c.mathState.Power(intVal)
+	default:
+		return 0, fmt.Errorf("unknown operator: %s", node.value)
+	}
+
+	// Check for errors
+	if err := c.mathState.Check(); err != nil {
+		return 0, err
+	}
+
+	return c.mathState.Value(), nil
+}
+
+func (c *Calculator) evaluateFormula() string {
+	if strings.TrimSpace(c.formulaInput) == "" {
+		return "0"
+	}
+
+	// Parse the formula into an expression tree
+	root, err := parseInfixExpression(c.formulaInput)
+	if err != nil {
+		return "Error: " + err.Error()
+	}
+
+	// Evaluate the tree
+	result, err := c.evaluateExpressionTree(root)
+	if err != nil {
+		return "Error: " + err.Error()
+	}
+
+	c.formula = c.formulaInput
+	c.formulaInput = ""
+	c.result = fmt.Sprintf("%g", result)
+	return c.result
 }
 
 type CalculatorUI struct {
 	window                *gtk.Window
 	displayLabel          *gtk.Label
+	formulaLabel          *gtk.Label // For advanced mode formula overlay
 	modeSelector          map[string]*gtk.Button
 	currentMode           int
 	calc                  *Calculator
@@ -196,6 +315,24 @@ button.mode_selector:hover {
 
 	overlayWidget.AddOverlay(modeSelectorBox)
 
+	// Formula label overlay (for advanced mode)
+	ui.formulaLabel = gtk.NewLabel("")
+	ui.formulaLabel.SetHAlign(gtk.AlignEnd)
+	ui.formulaLabel.SetVAlign(gtk.AlignEnd)
+	ui.formulaLabel.SetMarginEnd(12)
+	ui.formulaLabel.SetMarginBottom(12)
+
+	formulaLabelProvider := gtk.NewCSSProvider()
+	formulaLabelProvider.LoadFromData(`
+label {
+	color: #707070ff;
+	font-size: 12px;
+	font-weight: normal;
+}
+`)
+	ui.formulaLabel.StyleContext().AddProvider(formulaLabelProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+	overlayWidget.AddOverlay(ui.formulaLabel)
+
 	mainBox.Append(overlayWidget)
 
 	gridBox := gtk.NewBox(gtk.OrientationVertical, 8)
@@ -212,7 +349,7 @@ button.mode_selector:hover {
 	operatorProvider := gtk.NewCSSProvider()
 	operatorProvider.LoadFromData(`
 button.operator-button {
-	background-color: #3c3c46;
+	background: #3c3c46;
 	color: #dcdcff;
 	font-size: 24px;
 	padding: 16px;
@@ -259,7 +396,7 @@ box-shadow: inset 8px 8px 16px #232327,
 	equalsProvider := gtk.NewCSSProvider()
 	equalsProvider.LoadFromData(`
 button.equals-button {
-	background-color: #507850;
+	background: #507850;
 	color: #f0f0f0;
 	font-size: 24px;
 	padding: 16px;
@@ -295,7 +432,7 @@ box-shadow: inset 8px 8px 16px #445644,
 	clearProvider := gtk.NewCSSProvider()
 	clearProvider.LoadFromData(`
 button.clear-button {
-	background-color: #5a3c3c;
+	background: #5a3c3c;
 	color: #ffc8c8;
 	font-size: 24px;
 	padding: 16px;
@@ -331,7 +468,7 @@ box-shadow: inset 8px 8px 16px #452e2e,
 	numberProvider := gtk.NewCSSProvider()
 	numberProvider.LoadFromData(`
 button.number-button {
-	background-color: #303136;
+	background: #303136;
 	color: #dcdcdc;
 	font-size: 24px;
 	padding: 16px;
@@ -424,68 +561,137 @@ window {
 }
 
 func (ui *CalculatorUI) handleInput(key string) {
-	switch key {
-	case "+", "-", "*", "/":
-		ui.calc.setOperator(key)
-		ui.updateActiveOperationButton(key)
-	case "=":
-		ui.calc.equals()
-		ui.clearActiveOperationButton()
-	case "C":
-		ui.calc.clear()
-		ui.clearActiveOperationButton()
-	default:
-		ui.calc.inputDigit(key)
+	if ui.currentMode == 0 {
+		// Simple mode
+		switch key {
+		case "+", "-", "*", "/":
+			ui.calc.setOperator(key)
+			ui.updateActiveOperationButton(key)
+		case "=":
+			ui.calc.equals()
+			ui.clearActiveOperationButton()
+		case "C":
+			ui.calc.clear()
+			ui.clearActiveOperationButton()
+		default:
+			ui.calc.inputDigit(key)
+		}
+	} else {
+		// Advanced mode
+		switch key {
+		case "=":
+			ui.calc.evaluateFormula()
+		case "C":
+			ui.calc.clearFormula()
+		default:
+			ui.calc.inputFormulaChar(key)
+		}
 	}
 }
 
 func (ui *CalculatorUI) handleKeyEvent(keyval uint, keycode uint, state gdk.ModifierType) bool {
-	switch keyval {
-	case gdk.KEY_0:
-		ui.handleInput("0")
-	case gdk.KEY_1:
-		ui.handleInput("1")
-	case gdk.KEY_2:
-		ui.handleInput("2")
-	case gdk.KEY_3:
-		ui.handleInput("3")
-	case gdk.KEY_4:
-		ui.handleInput("4")
-	case gdk.KEY_5:
-		ui.handleInput("5")
-	case gdk.KEY_6:
-		ui.handleInput("6")
-	case gdk.KEY_7:
-		ui.handleInput("7")
-	case gdk.KEY_8:
-		ui.handleInput("8")
-	case gdk.KEY_9:
-		ui.handleInput("9")
-	case gdk.KEY_plus, gdk.KEY_equal:
-		if (state & gdk.ShiftMask) != 0 {
-			ui.handleInput("+")
-		} else {
+	if ui.currentMode == 0 {
+		// Simple mode keyboard handling
+		switch keyval {
+		case gdk.KEY_0:
+			ui.handleInput("0")
+		case gdk.KEY_1:
+			ui.handleInput("1")
+		case gdk.KEY_2:
+			ui.handleInput("2")
+		case gdk.KEY_3:
+			ui.handleInput("3")
+		case gdk.KEY_4:
+			ui.handleInput("4")
+		case gdk.KEY_5:
+			ui.handleInput("5")
+		case gdk.KEY_6:
+			ui.handleInput("6")
+		case gdk.KEY_7:
+			ui.handleInput("7")
+		case gdk.KEY_8:
+			ui.handleInput("8")
+		case gdk.KEY_9:
+			ui.handleInput("9")
+		case gdk.KEY_plus, gdk.KEY_equal:
+			if (state & gdk.ShiftMask) != 0 {
+				ui.handleInput("+")
+			} else {
+				ui.handleInput("=")
+			}
+		case gdk.KEY_minus:
+			ui.handleInput("-")
+		case gdk.KEY_asterisk:
+			ui.handleInput("*")
+		case gdk.KEY_slash:
+			ui.handleInput("/")
+		case gdk.KEY_Return, gdk.KEY_KP_Enter:
 			ui.handleInput("=")
-		}
-	case gdk.KEY_minus:
-		ui.handleInput("-")
-	case gdk.KEY_asterisk:
-		ui.handleInput("*")
-	case gdk.KEY_slash:
-		ui.handleInput("/")
-	case gdk.KEY_Return, gdk.KEY_KP_Enter:
-		ui.handleInput("=")
-	case gdk.KEY_BackSpace:
-		ui.handleInput("C")
-	case gdk.KEY_c, gdk.KEY_C:
-		if (state & gdk.ControlMask) != 0 {
+		case gdk.KEY_BackSpace:
+			ui.handleInput("C")
+		case gdk.KEY_c, gdk.KEY_C:
+			if (state & gdk.ControlMask) != 0 {
+				return false
+			}
+			ui.handleInput("C")
+		case gdk.KEY_Escape:
+			ui.handleInput("C")
+		default:
 			return false
 		}
-		ui.handleInput("C")
-	case gdk.KEY_Escape:
-		ui.handleInput("C")
-	default:
-		return false
+	} else {
+		// Advanced mode keyboard handling
+		switch keyval {
+		case gdk.KEY_0:
+			ui.handleInput("0")
+		case gdk.KEY_1:
+			ui.handleInput("1")
+		case gdk.KEY_2:
+			ui.handleInput("2")
+		case gdk.KEY_3:
+			ui.handleInput("3")
+		case gdk.KEY_4:
+			ui.handleInput("4")
+		case gdk.KEY_5:
+			ui.handleInput("5")
+		case gdk.KEY_6:
+			ui.handleInput("6")
+		case gdk.KEY_7:
+			ui.handleInput("7")
+		case gdk.KEY_8:
+			ui.handleInput("8")
+		case gdk.KEY_9:
+			ui.handleInput("9")
+		case gdk.KEY_plus:
+			ui.handleInput("+")
+		case gdk.KEY_minus:
+			ui.handleInput("-")
+		case gdk.KEY_asterisk:
+			ui.handleInput("*")
+		case gdk.KEY_slash:
+			ui.handleInput("/")
+		case gdk.KEY_parenleft:
+			ui.handleInput("(")
+		case gdk.KEY_parenright:
+			ui.handleInput(")")
+		case gdk.KEY_asciicircum:
+			ui.handleInput("^")
+		case gdk.KEY_period:
+			ui.handleInput(".")
+		case gdk.KEY_Return, gdk.KEY_KP_Enter:
+			ui.handleInput("=")
+		case gdk.KEY_BackSpace:
+			ui.calc.deleteFormulaChar()
+		case gdk.KEY_c, gdk.KEY_C:
+			if (state & gdk.ControlMask) != 0 {
+				return false
+			}
+			ui.handleInput("C")
+		case gdk.KEY_Escape:
+			ui.handleInput("C")
+		default:
+			return false
+		}
 	}
 
 	ui.updateDisplay()
@@ -493,7 +699,19 @@ func (ui *CalculatorUI) handleKeyEvent(keyval uint, keycode uint, state gdk.Modi
 }
 
 func (ui *CalculatorUI) updateDisplay() {
-	ui.displayLabel.SetLabel(ui.calc.display)
+	if ui.currentMode == 0 {
+		// Simple mode
+		ui.displayLabel.SetLabel(ui.calc.display)
+		ui.formulaLabel.SetLabel("")
+	} else {
+		// Advanced mode
+		ui.displayLabel.SetLabel(ui.calc.getFormulaDisplay())
+		if ui.calc.formula != "" {
+			ui.formulaLabel.SetLabel(ui.calc.formula)
+		} else {
+			ui.formulaLabel.SetLabel("")
+		}
+	}
 }
 
 func (ui *CalculatorUI) updateActiveOperationButton(operation string) {
