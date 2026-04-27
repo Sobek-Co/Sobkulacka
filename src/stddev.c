@@ -1,0 +1,75 @@
+#include <stdio.h>
+#include "ourmath.h"
+
+int main(void) {
+    double x;
+    int n = 0;
+
+    m_state *sum = m_init_state();
+    m_state *sum_sq = m_init_state();
+    m_state *tmp = m_init_state();
+
+    if (!sum || !sum_sq || !tmp) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return 1;
+    }
+
+    // Inicializace
+    m_set_state(sum, 0.0);
+    m_set_state(sum_sq, 0.0);
+
+    // Čtení vstupu
+    while (scanf("%lf", &x) == 1) {
+        n++;
+
+        // sum += x
+        m_add(sum, x);
+
+        // sum_sq += x^2
+        m_set_state(tmp, x);
+        m_power(tmp, 2);
+        m_add(sum_sq, m_get_state(tmp));
+    }
+
+    if (n < 2) {
+        fprintf(stderr, "Not enough data\n");
+        m_free_state(sum);
+        m_free_state(sum_sq);
+        m_free_state(tmp);
+        return 1;
+    }
+
+    m_state *result = m_init_state();
+    if (!result) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return 1;
+    }
+
+    // result = sum_sq
+    m_set_state(result, m_get_state(sum_sq));
+
+    // tmp = sum^2 / n
+    m_set_state(tmp, m_get_state(sum));
+    m_power(tmp, 2);
+    m_div(tmp, (double)n);
+
+    // result = sum_sq - (sum^2 / n)
+    m_sub(result, m_get_state(tmp));
+
+    // result = result / (n - 1)
+    m_div(result, (double)(n - 1));
+
+    // odmocnina
+    m_root(result, 2);
+
+    // výstup
+    printf("%.10f\n", m_get_state(result));
+
+    // úklid
+    m_free_state(sum);
+    m_free_state(sum_sq);
+    m_free_state(tmp);
+    m_free_state(result);
+
+    return 0;
+}
