@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"strings"
+	"regexp"
+	"strconv"
 )
 
 // type ExpTreeNode struct {
@@ -17,20 +18,20 @@ import (
 // 	}
 // }
 
-//*** A simple stack implementation using a slice ******
+// *** A simple stack implementation using a slice ******
 type stack []string
 
 func (s *stack) push(str string) {
 	*s = append(*s, str)
 }
 
-func (s * stack) pop() (string, error) {
+func (s *stack) pop() (string, error) {
 	if len(*s) == 0 {
 		return "", fmt.Errorf("stack is empty")
 	}
 	length := len(*s)
 	top := (*s)[length-1]
-	*s = (*s)[:length -1]
+	*s = (*s)[:length-1]
 	return top, nil
 }
 
@@ -40,9 +41,9 @@ func (s *stack) top() (string, error) {
 	}
 	return (*s)[len(*s)-1], nil
 }
+
 //******************************************************
 
-//
 func top_is_precedent(top_op_stack, current_op string) bool {
 	// Define operator precedence
 	precedence := map[string]int{
@@ -67,76 +68,88 @@ func top_is_precedent(top_op_stack, current_op string) bool {
 // const (
 // 		Number = iota
 // 		Operator
-// 		LeftParen 
+// 		LeftParen
 // 		RightParen
 // 	)
 
 // type Token struct {
-	
+
 // 	tokenType int
 // 	tokenStr string
 // }
 
+// Tokenize splits the input string into tokens (numbers, operators, parentheses)
+// Supports multi-digit and floating-point numbers
+func tokenize(expr string) []string {
+	// Pattern matches: floating-point numbers, operators, and parentheses
+	re := regexp.MustCompile(`\d+\.?\d*|[+\-*/^()]`)
+	return re.FindAllString(expr, -1)
+}
 
-func main1() {
-	istring := "31 + 4 * 2 / ( 1 - 5 )"
-	op_stack := make(stack, 0);
+// IsNumber checks if a token is a number (integer or float)
+func isNumber(token string) bool {
+	_, err := strconv.ParseFloat(token, 64)
+	return err == nil
+}
+
+func main() {
+	istring := "31.5+4*2.25 /( 1.1 - 5 )"
+	op_stack := make(stack, 0)
 	output := make([]string, 0)
 	fmt.Println("Input:", istring)
-	
-	istring = strings.ReplaceAll(istring, " ", "") // Remove spaces for easier processing
-	fmt.Println("Input:", istring)
+
+	// Tokenize the input
+	tokens := tokenize(istring)
+	fmt.Println("Tokens:", tokens)
 
 	parenCount := 0
-	// Iterate through the input string and process tokens
-	for _, token := range istring {
+	// Process each token
+	for _, token := range tokens {
 
-		switch token {
+		if isNumber(token) {
+			// It's a number - add to output
+			output = append(output, token)
 
-			// Numbers
-			case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
-				output = append(output, string(token))
-				// Can't handle multi-digit numbers
+		} else if token == "+" || token == "-" || token == "*" || token == "/" || token == "^" {
+			// It's an operator
+			stackTop, err := op_stack.top()
+			for err == nil && top_is_precedent(stackTop, token) {
+				topOp, _ := op_stack.pop()
+				output = append(output, topOp)
+				stackTop, err = op_stack.top()
+			}
+			op_stack.push(token)
 
-			// Operators
-			case '+', '-', '*', '/', '^':
-				stackTop, err := op_stack.top()
-				for err == nil && top_is_precedent(stackTop, string(token)) {
-					topOp, _ := op_stack.pop()
-					output = append(output, topOp)
-					stackTop, err = op_stack.top()
-				}
-				op_stack.push(string(token))
+		} else if token == "(" {
+			// Left parenthesis
+			op_stack.push(token)
+			parenCount++
 
-			// Parentheses
-			case '(':
-				op_stack.push(string(token))
-				parenCount += 1
-			case ')':
-				if parenCount<=0 {
+		} else if token == ")" {
+			// Right parenthesis
+			if parenCount <= 0 {
+				fmt.Println("Error: Mismatched parentheses")
+				return
+			}
+			for {
+				topOp, err := op_stack.pop()
+				if err != nil {
 					fmt.Println("Error: Mismatched parentheses")
 					return
 				}
-				for {
-					topOp, err := op_stack.pop()
-					if err != nil {
-						fmt.Println("Error: Mismatched parentheses")
-						return
-					}
-					if topOp == "(" {
-						break
-					}
-					output = append(output, topOp)
+				if topOp == "(" {
+					break
 				}
-				parenCount -= 1
-			
-			default:
-				fmt.Printf("Error: Invalid token '%c'\n", token)
-				return
+				output = append(output, topOp)
 			}
-	} // end for
-	
-	//Pop any remaining operators from the stack to the output
+			parenCount--
+		} else {
+			fmt.Printf("Error: Invalid token '%s'\n", token)
+			return
+		}
+	}
+
+	// Pop any remaining operators from the stack to the output
 	for {
 		topOp, err := op_stack.pop()
 		if err != nil {
