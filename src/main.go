@@ -131,7 +131,38 @@ func (c *Calculator) evaluateExpressionTree(node *ExpTreeNode) (float64, error) 
 		return val, nil
 	}
 
-	// Evaluate left and right subtrees
+	// Check if it's a unary operator (function or factorial)
+	if node.isUnary {
+		leftVal, err := c.evaluateExpressionTree(node.left)
+		if err != nil {
+			return 0, err
+		}
+
+		c.mathState.Set(leftVal)
+
+		switch node.unaryOp {
+		case "!":
+			c.mathState.Factorial()
+		case "sin":
+			c.mathState.Sin()
+		case "cos":
+			c.mathState.Cos()
+		case "tan":
+			c.mathState.Tan()
+		case "cot":
+			c.mathState.Cot()
+		default:
+			return 0, fmt.Errorf("unknown unary operator: %s", node.unaryOp)
+		}
+
+		if err := c.mathState.Check(); err != nil {
+			return 0, err
+		}
+
+		return c.mathState.Value(), nil
+	}
+
+	// Evaluate left and right subtrees for binary operators
 	leftVal, err := c.evaluateExpressionTree(node.left)
 	if err != nil {
 		return 0, err
@@ -154,6 +185,8 @@ func (c *Calculator) evaluateExpressionTree(node *ExpTreeNode) (float64, error) 
 		c.mathState.Mul(rightVal)
 	case "/":
 		c.mathState.Div(rightVal)
+	case "%":
+		c.mathState.Mod(int(rightVal))
 	case "^":
 		// Convert to int for power operation
 		intVal := int(rightVal)
@@ -202,6 +235,7 @@ type CalculatorUI struct {
 	calc                  *Calculator
 	buttons               map[string]*gtk.Button
 	activeOperationButton *gtk.Button
+	advancedFunctionsBox  *gtk.Box // Function buttons for advanced mode
 }
 
 func NewCalculatorUI() *CalculatorUI {
@@ -215,7 +249,7 @@ func NewCalculatorUI() *CalculatorUI {
 func (ui *CalculatorUI) buildUI() {
 	ui.window = gtk.NewWindow()
 	ui.window.SetTitle("Sobkulačka")
-	ui.window.SetDefaultSize(400, 500)
+	ui.window.SetDefaultSize(500, 500)
 	ui.window.SetResizable(false)
 
 	mainBox := gtk.NewBox(gtk.OrientationVertical, 0)
@@ -292,6 +326,7 @@ button.mode_selector:hover {
 		ui.modeSelector["simple"].AddCSSClass("active")
 		ui.modeSelector["advanced"].RemoveCSSClass("active")
 		ui.currentMode = 0
+		ui.advancedFunctionsBox.SetVisible(false)
 		ui.updateDisplay()
 	})
 	ui.modeSelector["simple"] = simpleMode
@@ -306,6 +341,7 @@ button.mode_selector:hover {
 		ui.modeSelector["advanced"].AddCSSClass("active")
 		ui.modeSelector["simple"].RemoveCSSClass("active")
 		ui.currentMode = 1
+		ui.advancedFunctionsBox.SetVisible(true)
 		ui.updateDisplay()
 	})
 	ui.modeSelector["advanced"] = advancedMode
@@ -501,10 +537,46 @@ box-shadow: inset 8px 8px 16px #232327,
 }
 `)
 
+	functionProvider := gtk.NewCSSProvider()
+	functionProvider.LoadFromData(`
+button.function-button {
+	background: #4a5a4a;
+	color: #d0ffd0;
+	font-size: 14px;
+	padding: 8px;
+	border-radius: 10px;
+	border: none;
+	box-shadow: inset 0 0 0px rgba(255, 255, 255, 0);
+  transition-property: all;
+  transition-duration: 0.25s;
+  transition-timing-function: ease-in-out;
+}
+button.function-button:hover {
+	opacity: 0.8;
+    border-radius: 10px;
+	background: #3d4d3d;
+	box-shadow: inset 4px 4px 5px #2d3d2d,
+	            inset -4px -4px 5px #576757;
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
+}
+button.function-button:active {
+	opacity: 0.6;
+	border-radius: 10px;
+	background: #3d4d3d;
+	box-shadow: inset 6px 6px 12px #262d26,
+	            inset -6px -6px 12px #616d61;
+  transition-property: all;
+  transition-duration: 0.1s;
+  transition-timing-function: ease-in-out;
+}
+`)
+
 	windowProvider := gtk.NewCSSProvider()
 	windowProvider.LoadFromData(`
 window {
-	background-color: #202124;
+	background: #202124;
   padding: 4px;
 }
 `)
@@ -547,7 +619,75 @@ window {
 		gridBox.Append(rowBox)
 	}
 
-	mainBox.Append(gridBox)
+	// Create horizontal container for grid and function buttons
+	calculatorContainer := gtk.NewBox(gtk.OrientationHorizontal, 8)
+	calculatorContainer.SetVExpand(true)
+
+	// Main calculator grid
+	calculatorContainer.Append(gridBox)
+
+	// Advanced function buttons for advanced mode
+	// Layout: 6 full-width buttons + 2 rows with 2 buttons each = 8 rows total
+	advancedFunctionsBox := gtk.NewBox(gtk.OrientationVertical, 4)
+	advancedFunctionsBox.SetMarginTop(8)
+	advancedFunctionsBox.SetVExpand(false)
+
+	// Full-width function buttons
+	fullWidthButtons := []string{"sin", "cos", "tan", "cot", "root", "%"}
+
+	for _, buttonLabel := range fullWidthButtons {
+		btn := gtk.NewButtonWithLabel(buttonLabel)
+		btn.SetVExpand(true)
+		btn.SetHExpand(true)
+		btn.SetCanFocus(false)
+		btn.AddCSSClass("function-button")
+		btn.StyleContext().AddProvider(functionProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+		label := buttonLabel
+		btn.ConnectClicked(func() {
+			ui.handleInput(label)
+			ui.updateDisplay()
+		})
+
+		ui.buttons[buttonLabel] = btn
+		advancedFunctionsBox.Append(btn)
+	}
+
+	// Dual-button rows for !, ^, (, )
+	dualButtonRows := [][]string{
+		{"!", "^"},
+		{"(", ")"},
+	}
+
+	for _, row := range dualButtonRows {
+		rowBox := gtk.NewBox(gtk.OrientationHorizontal, 4)
+		rowBox.SetHomogeneous(true)
+
+		for _, buttonLabel := range row {
+			btn := gtk.NewButtonWithLabel(buttonLabel)
+			btn.SetVExpand(true)
+			btn.SetHExpand(true)
+			btn.SetCanFocus(false)
+			btn.AddCSSClass("function-button")
+			btn.StyleContext().AddProvider(functionProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+			label := buttonLabel
+			btn.ConnectClicked(func() {
+				ui.handleInput(label)
+				ui.updateDisplay()
+			})
+
+			ui.buttons[buttonLabel] = btn
+			rowBox.Append(btn)
+		}
+
+		advancedFunctionsBox.Append(rowBox)
+	}
+
+	calculatorContainer.Append(advancedFunctionsBox)
+	advancedFunctionsBox.SetVisible(false) // Hidden by default (simple mode)
+	ui.advancedFunctionsBox = advancedFunctionsBox
+	mainBox.Append(calculatorContainer)
 
 	eventController := gtk.NewEventControllerKey()
 	eventController.ConnectKeyPressed(func(keyval uint, keycode uint, state gdk.ModifierType) bool {
@@ -578,11 +718,24 @@ func (ui *CalculatorUI) handleInput(key string) {
 		}
 	} else {
 		// Advanced mode
+		// Supported operators: + - * / ^ (power), ( ) parentheses
+		// Input placeholders for future parser extension: sin, cos, tan, cot, !, root, %
 		switch key {
 		case "=":
 			ui.calc.evaluateFormula()
 		case "C":
 			ui.calc.clearFormula()
+		case "sin", "cos", "tan", "cot":
+			// Trig functions - append with opening parenthesis for user to complete
+			// Full implementation requires parser update
+			ui.calc.inputFormulaChar(key + "(")
+		case "root":
+			// Root function - requires parser extension for proper evaluation
+			ui.calc.inputFormulaChar("root(")
+		case "!", "^", "%", "(", ")":
+			// ! (factorial) and % (modulo) require parser extension
+			// ^ (power) and parentheses are fully supported
+			ui.calc.inputFormulaChar(key)
 		default:
 			ui.calc.inputFormulaChar(key)
 		}
@@ -678,6 +831,10 @@ func (ui *CalculatorUI) handleKeyEvent(keyval uint, keycode uint, state gdk.Modi
 			ui.handleInput("^")
 		case gdk.KEY_period:
 			ui.handleInput(".")
+		case gdk.KEY_exclam:
+			ui.handleInput("!")
+		case gdk.KEY_percent:
+			ui.handleInput("%")
 		case gdk.KEY_Return, gdk.KEY_KP_Enter:
 			ui.handleInput("=")
 		case gdk.KEY_BackSpace:
