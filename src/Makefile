@@ -111,7 +111,7 @@ stddev:
 
 stddev_test: stddev
 	sudo sysctl kernel.perf_event_paranoid=1
-	awk 'BEGIN{srand(); for(i=0;i<1000000;i++) print rand()*1000}' > data.txt
+	awk 'BEGIN{srand(); for(i=0;i<10000000;i++) print rand()*1000}' > data.txt
 	perf record -g $(BUILD_DIR)/stddev < data.txt
 	perf report > ../profiling/perf_result.txt
 	perf report
