@@ -11,6 +11,8 @@ SRC = $(wildcard *.c)
 GO_SRC_DIR = .
 GO_BUILD_OUT = $(BUILD_DIR)/app
 
+STAGING_DIR = xpalacj00_xsobekd00_xstovim00_xvitekv00
+
 # pkg-config helpers
 CHECK_CFLAGS := $(shell pkg-config --cflags check 2>/dev/null)
 CHECK_LIBS   := $(shell pkg-config --libs check 2>/dev/null)
@@ -19,12 +21,38 @@ CHECK_LIBS   := $(shell pkg-config --libs check 2>/dev/null)
 PKG_MANAGER := $(shell command -v pacman || command -v apt || command -v dnf)
 
 # ---- Phony targets ----
-.PHONY: all clean deps test run help doc
+.PHONY: all clean deps test run help doc stddev pack
 
 # ---- Main target ----
-all:
+all: stddev
 	mkdir -p $(BUILD_DIR)
 	cd $(GO_SRC_DIR) && go mod tidy && go build -o $(GO_BUILD_OUT)
+
+# TODO: Doplnit
+stddev:
+	@echo "TODO"
+
+pack: doc
+	$(eval CUR_DIR := $(shell pwd))
+	$(eval TEMP_DIR := $(shell mktemp -d))
+	mkdir -p $(TEMP_DIR)/$(STAGING_DIR)
+
+# docs
+	mkdir $(TEMP_DIR)/$(STAGING_DIR)/doc
+	cp -r $(DOC_DIR)/* $(TEMP_DIR)/$(STAGING_DIR)/doc
+
+# repo
+	git clone git@git.sleepat.fit:SobekCo/Sobkulacka.git $(TEMP_DIR)/$(STAGING_DIR)/repo
+	cd $(TEMP_DIR)/$(STAGING_DIR)/repo && git fetch --all && git pull --all
+
+# installer
+	mkdir $(TEMP_DIR)/$(STAGING_DIR)/install
+	cp ../install.sh $(TEMP_DIR)/$(STAGING_DIR)/install
+# TODO: Pridat instalator nebo binarku pro profiler
+
+	cd $(TEMP_DIR) && zip -r $(CUR_DIR)/$(STAGING_DIR).zip $(STAGING_DIR)
+
+	rm -rf $(TEMP_DIR)
 
 clean:
 	rm -rf $(BUILD_DIR) $(DOC_DIR)
@@ -107,11 +135,20 @@ run: all
 
 help:
 	@echo "Targets:"
-	@echo "  all      - Build Go app"
+	@echo "  all      - Build Desktop App and Profiling program"
 	@echo "  deps     - Install system + Go dependencies"
 	@echo "  test     - Run C tests"
 	@echo "  run      - Run built app"
 	@echo "  clean    - Remove build directory"
+	@echo "  doc      - Generate doucmentation"
+	@echo "  stddev   - Build only profiling program"
+	@echo "  pack     - Packs project into format for project submission"
+	@echo ""
+	@echo "To build program on any Debian/Fedora/Arch based system, simply run these commands in order:"
+	@echo "  - make deps"
+	@echo "  - make all"
+	@echo "On other linux platforms, please install all packages listed by the 'make deps' command and then use 'make all'"
+	@echo "On non-linux platforms, you will also need to install the GTK4 platform"
 
 # ---- Doc ----
 
