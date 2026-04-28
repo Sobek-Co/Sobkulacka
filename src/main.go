@@ -151,6 +151,10 @@ func (c *Calculator) evaluateExpressionTree(node *ExpTreeNode) (float64, error) 
 			c.mathState.Tan()
 		case "cot":
 			c.mathState.Cot()
+		case "root":
+			// Square root (2nd root) - for more advanced root operations, use the exponent ^ operator
+			// Example: root(16) = 4, or use 16^(1/2) for other roots
+			c.mathState.Root(2)
 		default:
 			return 0, fmt.Errorf("unknown unary operator: %s", node.unaryOp)
 		}

@@ -149,7 +149,7 @@ func (s *Stack[T]) top() (T, error) {
 // isUnaryPrefix checks if a token is a prefix unary operator
 func isUnaryPrefix(token string) bool {
 	switch token {
-	case "sin", "cos", "tan", "cot":
+	case "sin", "cos", "tan", "cot", "root":
 		return true
 	default:
 		return false
@@ -166,7 +166,7 @@ func operatorPrecedence(op string) int {
 		return 2
 	case "^":
 		return 3
-	case "sin", "cos", "tan", "cot":
+	case "sin", "cos", "tan", "cot", "root":
 		return 4 // Unary functions have high precedence
 	case "!":
 		return 5 // Factorial has highest precedence
@@ -190,7 +190,7 @@ func topIsPrecedent(topOpStack, currentOp string) bool {
 // tokenize splits the input string into tokens
 // Pattern matches: floating-point numbers, function names, operators, and parentheses
 func tokenize(expr string) []string {
-	re := regexp.MustCompile(`\d+\.?\d*|sin|cos|tan|cot|[+\-*/%^()!]`)
+	re := regexp.MustCompile(`\d+\.?\d*|sin|cos|tan|cot|root|[+\-*/%^()!]`)
 	return re.FindAllString(expr, -1)
 }
 
