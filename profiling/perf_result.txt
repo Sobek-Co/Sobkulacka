@@ -1,0 +1,312 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 141  of event 'task-clock:ppp'
+# Event count (approx.): 35250000
+#
+# Children      Self  Command  Shared Object     Symbol                             
+# ........  ........  .......  ................  ...................................
+#
+   100.00%     0.00%  stddev   [unknown]         [.] 0x3e112e0be826d695
+            |
+            ---0x3e112e0be826d695
+               |          
+               |--97.16%--main
+               |          |          
+               |          |--94.33%--__isoc99_scanf
+               |          |          |          
+               |          |          |--91.49%--__vfscanf_internal
+               |          |          |          |          
+               |          |          |          |--39.01%--__GI_____strtod_l_internal
+               |          |          |          |          |          
+               |          |          |          |          |--10.64%--str_to_mpn.isra.0
+               |          |          |          |          |          
+               |          |          |          |          |--3.55%--round_and_return
+               |          |          |          |          |          
+               |          |          |          |           --1.42%--__mpn_mul
+               |          |          |          |          
+               |          |          |          |--7.80%--__mpn_lshift
+               |          |          |          |          
+               |          |          |          |--2.13%--__memmove_avx_unaligned_erms
+               |          |          |          |          
+               |          |          |          |--1.42%--__strlen_avx2
+               |          |          |          |          
+               |          |          |          |--1.42%--__mpn_construct_double
+               |          |          |          |          
+               |          |          |          |--1.42%--str_to_mpn.isra.0
+               |          |          |          |          
+               |          |          |          |--0.71%--_IO_sputbackc
+               |          |          |          |          
+               |          |          |          |--0.71%--__mpn_mul
+               |          |          |          |          
+               |          |          |           --0.71%--__memcpy_chk@plt
+               |          |          |          
+               |          |          |--1.42%--__GI___libc_cleanup_pop_restore
+               |          |          |          
+               |          |          |--0.71%--__GI___libc_cleanup_push_defer
+               |          |          |          
+               |          |           --0.71%--__strtod_internal
+               |          |          
+               |           --0.71%--__vfscanf_internal
+               |          
+               |--1.42%--m_add
+               |          
+               |--0.71%--m_power
+               |          
+                --0.71%--m_set_state
+
+    97.16%     2.13%  stddev   stddev            [.] main
+            |          
+            |--95.04%--main
+            |          |          
+            |          |--94.33%--__isoc99_scanf
+            |          |          |          
+            |          |          |--91.49%--__vfscanf_internal
+            |          |          |          |          
+            |          |          |          |--39.01%--__GI_____strtod_l_internal
+            |          |          |          |          |          
+            |          |          |          |          |--10.64%--str_to_mpn.isra.0
+            |          |          |          |          |          
+            |          |          |          |          |--3.55%--round_and_return
+            |          |          |          |          |          
+            |          |          |          |           --1.42%--__mpn_mul
+            |          |          |          |          
+            |          |          |          |--7.80%--__mpn_lshift
+            |          |          |          |          
+            |          |          |          |--2.13%--__memmove_avx_unaligned_erms
+            |          |          |          |          
+            |          |          |          |--1.42%--__strlen_avx2
+            |          |          |          |          
+            |          |          |          |--1.42%--__mpn_construct_double
+            |          |          |          |          
+            |          |          |          |--1.42%--str_to_mpn.isra.0
+            |          |          |          |          
+            |          |          |          |--0.71%--_IO_sputbackc
+            |          |          |          |          
+            |          |          |          |--0.71%--__mpn_mul
+            |          |          |          |          
+            |          |          |           --0.71%--__memcpy_chk@plt
+            |          |          |          
+            |          |          |--1.42%--__GI___libc_cleanup_pop_restore
+            |          |          |          
+            |          |          |--0.71%--__GI___libc_cleanup_push_defer
+            |          |          |          
+            |          |           --0.71%--__strtod_internal
+            |          |          
+            |           --0.71%--__vfscanf_internal
+            |          
+             --2.13%--0x3e112e0be826d695
+                       main
+
+    94.33%     0.00%  stddev   libc.so.6         [.] __isoc99_scanf
+            |
+            ---__isoc99_scanf
+               |          
+               |--91.49%--__vfscanf_internal
+               |          |          
+               |          |--39.01%--__GI_____strtod_l_internal
+               |          |          |          
+               |          |          |--10.64%--str_to_mpn.isra.0
+               |          |          |          
+               |          |          |--3.55%--round_and_return
+               |          |          |          
+               |          |           --1.42%--__mpn_mul
+               |          |          
+               |          |--7.80%--__mpn_lshift
+               |          |          
+               |          |--2.13%--__memmove_avx_unaligned_erms
+               |          |          
+               |          |--1.42%--__strlen_avx2
+               |          |          
+               |          |--1.42%--__mpn_construct_double
+               |          |          
+               |          |--1.42%--str_to_mpn.isra.0
+               |          |          
+               |          |--0.71%--_IO_sputbackc
+               |          |          
+               |          |--0.71%--__mpn_mul
+               |          |          
+               |           --0.71%--__memcpy_chk@plt
+               |          
+               |--1.42%--__GI___libc_cleanup_pop_restore
+               |          
+               |--0.71%--__GI___libc_cleanup_push_defer
+               |          
+                --0.71%--__strtod_internal
+
+    92.20%    36.88%  stddev   libc.so.6         [.] __vfscanf_internal
+            |          
+            |--55.32%--__vfscanf_internal
+            |          |          
+            |          |--39.01%--__GI_____strtod_l_internal
+            |          |          |          
+            |          |          |--10.64%--str_to_mpn.isra.0
+            |          |          |          
+            |          |          |--3.55%--round_and_return
+            |          |          |          
+            |          |           --1.42%--__mpn_mul
+            |          |          
+            |          |--7.80%--__mpn_lshift
+            |          |          
+            |          |--2.13%--__memmove_avx_unaligned_erms
+            |          |          
+            |          |--1.42%--__strlen_avx2
+            |          |          
+            |          |--1.42%--__mpn_construct_double
+            |          |          
+            |          |--1.42%--str_to_mpn.isra.0
+            |          |          
+            |          |--0.71%--_IO_sputbackc
+            |          |          
+            |          |--0.71%--__mpn_mul
+            |          |          
+            |           --0.71%--__memcpy_chk@plt
+            |          
+             --36.88%--0x3e112e0be826d695
+                       main
+                       |          
+                       |--36.17%--__isoc99_scanf
+                       |          __vfscanf_internal
+                       |          
+                        --0.71%--__vfscanf_internal
+
+    39.01%    23.40%  stddev   libc.so.6         [.] __GI_____strtod_l_internal
+            |          
+            |--23.40%--0x3e112e0be826d695
+            |          main
+            |          __isoc99_scanf
+            |          __vfscanf_internal
+            |          __GI_____strtod_l_internal
+            |          
+             --15.60%--__GI_____strtod_l_internal
+                       |          
+                       |--10.64%--str_to_mpn.isra.0
+                       |          
+                       |--3.55%--round_and_return
+                       |          
+                        --1.42%--__mpn_mul
+
+    12.06%    12.06%  stddev   libc.so.6         [.] str_to_mpn.isra.0
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               |          
+               |--10.64%--__GI_____strtod_l_internal
+               |          str_to_mpn.isra.0
+               |          
+                --1.42%--str_to_mpn.isra.0
+
+     7.80%     7.80%  stddev   libc.so.6         [.] __mpn_lshift
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               __mpn_lshift
+
+     3.55%     3.55%  stddev   libc.so.6         [.] round_and_return
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               __GI_____strtod_l_internal
+               round_and_return
+
+     2.13%     2.13%  stddev   libc.so.6         [.] __mpn_mul
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               |          
+               |--1.42%--__GI_____strtod_l_internal
+               |          __mpn_mul
+               |          
+                --0.71%--__mpn_mul
+
+     2.13%     2.13%  stddev   libc.so.6         [.] __memmove_avx_unaligned_erms
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               __memmove_avx_unaligned_erms
+
+     1.42%     1.42%  stddev   libc.so.6         [.] __mpn_construct_double
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               __mpn_construct_double
+
+     1.42%     1.42%  stddev   libc.so.6         [.] __strlen_avx2
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               __strlen_avx2
+
+     1.42%     1.42%  stddev   libc.so.6         [.] __GI___libc_cleanup_pop_restore
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __GI___libc_cleanup_pop_restore
+
+     1.42%     1.42%  stddev   stddev            [.] m_add
+            |
+            ---0x3e112e0be826d695
+               m_add
+
+     0.71%     0.71%  stddev   libc.so.6         [.] _IO_sputbackc
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               _IO_sputbackc
+
+     0.71%     0.71%  stddev   libc.so.6         [.] __memcpy_chk@plt
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __vfscanf_internal
+               __memcpy_chk@plt
+
+     0.71%     0.71%  stddev   libc.so.6         [.] __GI___libc_cleanup_push_defer
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __GI___libc_cleanup_push_defer
+
+     0.71%     0.71%  stddev   libc.so.6         [.] __strtod_internal
+            |
+            ---0x3e112e0be826d695
+               main
+               __isoc99_scanf
+               __strtod_internal
+
+     0.71%     0.71%  stddev   stddev            [.] m_power
+            |
+            ---0x3e112e0be826d695
+               m_power
+
+     0.71%     0.71%  stddev   stddev            [.] m_set_state
+            |
+            ---0x3e112e0be826d695
+               m_set_state
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#
