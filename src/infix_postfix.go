@@ -7,9 +7,11 @@ import (
 )
 
 type ExpTreeNode struct {
-	value string
-	left  *ExpTreeNode
-	right *ExpTreeNode
+	value   string
+	left    *ExpTreeNode
+	right   *ExpTreeNode
+	isUnary bool
+	unaryOp string
 }
 
 func NewExpTreeNode(token string) *ExpTreeNode {
@@ -17,8 +19,6 @@ func NewExpTreeNode(token string) *ExpTreeNode {
 		value: token,
 	}
 }
-
-//************ AI generated code **********************//
 
 // Postorder traversal: Left -> Right -> Root (postfix notation)
 func (node *ExpTreeNode) Postorder() string {
@@ -83,14 +83,39 @@ func createSubtree(nodeStack *Stack[*ExpTreeNode], operator string) error {
 	if operator == "" {
 		return fmt.Errorf("invalid operator")
 	}
+
 	opNode := NewExpTreeNode(operator)
-	rightNode, errL := nodeStack.pop()
-	leftNode, errR := nodeStack.pop()
-	if errL != nil || errR != nil {
-		return fmt.Errorf("invalid expression: insufficient operands")
+
+	// Check if it's a unary operator
+	if isUnaryPrefix(operator) {
+		// Unary prefix operator (sin, cos, tan, cot) - pop one operand
+		operand, err := nodeStack.pop()
+		if err != nil {
+			return fmt.Errorf("invalid expression: %s requires an operand", operator)
+		}
+		opNode.left = operand
+		opNode.isUnary = true
+		opNode.unaryOp = operator
+	} else if operator == "!" {
+		// Postfix unary operator (factorial) - pop one operand
+		operand, err := nodeStack.pop()
+		if err != nil {
+			return fmt.Errorf("invalid expression: factorial requires an operand")
+		}
+		opNode.left = operand
+		opNode.isUnary = true
+		opNode.unaryOp = "!"
+	} else {
+		// Binary operator - pop two operands
+		rightNode, errL := nodeStack.pop()
+		leftNode, errR := nodeStack.pop()
+		if errL != nil || errR != nil {
+			return fmt.Errorf("invalid expression: insufficient operands")
+		}
+		opNode.left = leftNode
+		opNode.right = rightNode
 	}
-	opNode.left = leftNode
-	opNode.right = rightNode
+
 	nodeStack.push(opNode)
 	return nil
 }
@@ -121,33 +146,51 @@ func (s *Stack[T]) top() (T, error) {
 	return (*s)[len(*s)-1], nil
 }
 
+// isUnaryPrefix checks if a token is a prefix unary operator
+func isUnaryPrefix(token string) bool {
+	switch token {
+	case "sin", "cos", "tan", "cot":
+		return true
+	default:
+		return false
+	}
+}
+
+// operatorPrecedence returns the precedence of an operator
+// Higher number means higher precedence
+func operatorPrecedence(op string) int {
+	switch op {
+	case "+", "-":
+		return 1
+	case "*", "/", "%":
+		return 2
+	case "^":
+		return 3
+	case "sin", "cos", "tan", "cot":
+		return 4 // Unary functions have high precedence
+	case "!":
+		return 5 // Factorial has highest precedence
+	default:
+		return 0
+	}
+}
+
 // topIsPrecedent checks if the operator on the stack has higher or equal precedence
 func topIsPrecedent(topOpStack, currentOp string) bool {
-	// Define operator precedence
-	precedence := map[string]int{
-		"+": 1,
-		"-": 1,
-		"*": 2,
-		"/": 2,
-		"^": 3,
-		"(": 0,
-	}
+	p1 := operatorPrecedence(topOpStack)
+	p2 := operatorPrecedence(currentOp)
 
-	p1, exists1 := precedence[topOpStack]
-	p2, exists2 := precedence[currentOp]
-
-	if !exists1 || !exists2 {
+	if p1 == 0 || p2 == 0 {
 		return false
 	}
 
 	return p1 >= p2
 }
 
-// tokenize splits the input string into tokens (numbers, operators, parentheses)
-// Supports multi-digit and floating-point numbers
+// tokenize splits the input string into tokens
+// Pattern matches: floating-point numbers, function names, operators, and parentheses
 func tokenize(expr string) []string {
-	// Pattern matches: floating-point numbers, operators, and parentheses
-	re := regexp.MustCompile(`\d+\.?\d*|[+\-*/^()]`)
+	re := regexp.MustCompile(`\d+\.?\d*|sin|cos|tan|cot|[+\-*/%^()!]`)
 	return re.FindAllString(expr, -1)
 }
 
@@ -158,7 +201,7 @@ func isNumber(token string) bool {
 }
 
 // parseInfixExpression converts an infix expression to an expression tree
-// using the Shunting Yard algorithm. It handles operator precedence and parentheses.
+// using the Shunting Yard algorithm with support for unary and postfix operators
 func parseInfixExpression(inputString string) (*ExpTreeNode, error) {
 	opStack := make(Stack[string], 0)
 	nodeStack := make(Stack[*ExpTreeNode], 0)
@@ -171,6 +214,7 @@ func parseInfixExpression(inputString string) (*ExpTreeNode, error) {
 	}
 
 	parenCount := 0
+
 	// Process each token
 	for _, token := range tokens {
 
@@ -178,10 +222,28 @@ func parseInfixExpression(inputString string) (*ExpTreeNode, error) {
 			// It's a number - add to node stack
 			nodeStack.push(NewExpTreeNode(token))
 
-		} else if token == "+" || token == "-" || token == "*" || token == "/" || token == "^" {
-			// It's an operator
+		} else if isUnaryPrefix(token) {
+			// Prefix unary operator (sin, cos, tan, cot)
+			// Push to operator stack with high precedence
+			opStack.push(token)
+
+		} else if token == "!" {
+			// Postfix unary operator (factorial)
+			// Apply to the top node in the stack immediately
+			operand, err := nodeStack.pop()
+			if err != nil {
+				return nil, fmt.Errorf("invalid expression: factorial operator needs an operand")
+			}
+			factNode := NewExpTreeNode("!")
+			factNode.left = operand
+			factNode.isUnary = true
+			factNode.unaryOp = "!"
+			nodeStack.push(factNode)
+
+		} else if token == "+" || token == "-" || token == "*" || token == "/" || token == "^" || token == "%" {
+			// Binary operator
 			stackTop, err := opStack.top()
-			for err == nil && topIsPrecedent(stackTop, token) {
+			for err == nil && stackTop != "(" && topIsPrecedent(stackTop, token) {
 				topOp, _ := opStack.pop()
 				if err := createSubtree(&nodeStack, topOp); err != nil {
 					return nil, err
@@ -200,6 +262,8 @@ func parseInfixExpression(inputString string) (*ExpTreeNode, error) {
 			if parenCount <= 0 {
 				return nil, fmt.Errorf("mismatched parentheses: unexpected closing parenthesis")
 			}
+
+			// Pop operators until we see "("
 			for {
 				topOp, err := opStack.pop()
 				if err != nil {
@@ -212,6 +276,16 @@ func parseInfixExpression(inputString string) (*ExpTreeNode, error) {
 					return nil, err
 				}
 			}
+
+			// Check if there's a function on top of the stack
+			peek, err := opStack.top()
+			if err == nil && isUnaryPrefix(peek) {
+				fn, _ := opStack.pop()
+				if err := createSubtree(&nodeStack, fn); err != nil {
+					return nil, err
+				}
+			}
+
 			parenCount--
 		} else {
 			return nil, fmt.Errorf("invalid token '%s'", token)
@@ -227,6 +301,12 @@ func parseInfixExpression(inputString string) (*ExpTreeNode, error) {
 		if topOp == "(" {
 			return nil, fmt.Errorf("mismatched parentheses: unclosed opening parenthesis")
 		}
+
+		// Handle unary prefix operators that weren't used - this is an error
+		if isUnaryPrefix(topOp) {
+			return nil, fmt.Errorf("incomplete function call: %s requires an argument", topOp)
+		}
+
 		if err := createSubtree(&nodeStack, topOp); err != nil {
 			return nil, err
 		}
