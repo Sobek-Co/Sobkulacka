@@ -27,7 +27,7 @@ all: stddev
 	cd $(GO_SRC_DIR) && go mod tidy && go build -o $(GO_BUILD_OUT)
 
 clean:
-	rm -rf $(BUILD_DIR) $(DOC_DIR) data.txt
+	rm -rf $(BUILD_DIR) $(DOC_DIR) data.txt perf.data perf.data.old
 
 # ---- Dependencies ----
 
