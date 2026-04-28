@@ -115,7 +115,7 @@ stddev_test: stddev
 	perf record -g $(BUILD_DIR)/stddev < data.txt
 	perf report > ../profiling/perf_result.txt
 	perf report
-	rm data.txt perf.data perf.data.old
+	rm -f data.txt perf.data perf.data.old
 
 # ---- Run ----
 
