@@ -27,7 +27,7 @@ all: stddev
 	cd $(GO_SRC_DIR) && go mod tidy && go build -o $(GO_BUILD_OUT)
 
 clean:
-	rm -rf $(BUILD_DIR) $(DOC_DIR)
+	rm -rf $(BUILD_DIR) $(DOC_DIR) gmon.out
 
 # ---- Dependencies ----
 
@@ -105,14 +105,15 @@ test: check_install
 stddev:
 	mkdir -p $(BUILD_DIR)
 	$(CC) -o $(BUILD_DIR)/stddev \
-		$(CFLAGS) \
+		$(CFLAGS) -pg \
 		ourmath.c profiling/stddev.c \
 		$(LIBS)
 
 stddev_test: stddev
-	awk 'BEGIN{srand(); for(i=0;i<1000000;i++) print rand()*1000}' > data_1M.txt
+	awk 'BEGIN{srand(); for(i=0;i<10000000;i++) print rand()*1000}' > data_1M.txt
 	$(BUILD_DIR)/stddev < data_1M.txt
 	rm data_1M.txt
+	gprof $(BUILD_DIR)/stddev gmon.out > gprof_out.txt
 
 # ---- Run ----
 
