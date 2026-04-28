@@ -22,6 +22,12 @@ int main(void) {
         return 1;
     }
 
+    // Set accuracy
+    m_set_accuracy(sum, 1e-9);
+    m_set_accuracy(sum_sq, 1e-9);
+    m_set_accuracy(tmp, 1e-9);
+    m_set_accuracy(result, 1e-9);
+
     // Initialize values
     m_set_state(sum, 0.0);
     m_set_state(sum_sq, 0.0);
