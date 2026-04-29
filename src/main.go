@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -390,6 +392,35 @@ label {
 `)
 	ui.formulaLabel.StyleContext().AddProvider(formulaLabelProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 	overlayWidget.AddOverlay(ui.formulaLabel)
+
+	// Help label overlay (top right)
+	helpLabel := gtk.NewLabel("?")
+	helpLabel.SetHAlign(gtk.AlignEnd)
+	helpLabel.SetVAlign(gtk.AlignStart)
+	helpLabel.SetMarginEnd(12)
+	helpLabel.SetMarginTop(8)
+
+	helpLabelProvider := gtk.NewCSSProvider()
+	helpLabelProvider.LoadFromData(`
+label {
+	font-size: 16px;
+	font-weight: bold;
+	color: #dcdcff;
+}
+label:hover {
+	opacity: 0.8;
+}
+`)
+	helpLabel.StyleContext().AddProvider(helpLabelProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+	// Add click handler using gesture controller
+	gestureClick := gtk.NewGestureClick()
+	helpLabel.AddController(gestureClick)
+	gestureClick.ConnectPressed(func(nPress int, x float64, y float64) {
+		openURL("https://share.vypal.me/s/priruckos")
+	})
+
+	overlayWidget.AddOverlay(helpLabel)
 
 	mainBox.Append(overlayWidget)
 
@@ -919,6 +950,23 @@ func (ui *CalculatorUI) clearActiveOperationButton() {
 
 func (ui *CalculatorUI) show() {
 	ui.window.Present()
+}
+
+func openURL(url string) {
+	var err error
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	default:
+		err = exec.Command("xdg-open", url).Start()
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to open URL: %v\n", err)
+	}
 }
 
 func main() {
