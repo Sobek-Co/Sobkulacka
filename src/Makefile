@@ -28,10 +28,6 @@ all: stddev
 	mkdir -p $(BUILD_DIR)
 	cd $(GO_SRC_DIR) && go mod tidy && go build -o $(GO_BUILD_OUT)
 
-# TODO: Doplnit
-stddev:
-	@echo "TODO"
-
 pack: doc
 	$(eval CUR_DIR := $(shell pwd))
 	$(eval TEMP_DIR := $(shell mktemp -d))
