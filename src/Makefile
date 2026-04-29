@@ -28,7 +28,7 @@ all: stddev
 	mkdir -p $(BUILD_DIR)
 	cd $(GO_SRC_DIR) && go mod tidy && go build -o $(GO_BUILD_OUT)
 
-pack: doc
+pack: doc stddev
 	$(eval CUR_DIR := $(shell pwd))
 	$(eval TEMP_DIR := $(shell mktemp -d))
 	mkdir -p $(TEMP_DIR)/$(STAGING_DIR)
@@ -43,8 +43,8 @@ pack: doc
 
 # installer
 	mkdir $(TEMP_DIR)/$(STAGING_DIR)/install
-	cp ../install.sh $(TEMP_DIR)/$(STAGING_DIR)/install
-# TODO: Pridat instalator nebo binarku pro profiler
+	cp ../install.sh $(TEMP_DIR)/$(STAGING_DIR)/install.sh
+	cp $(BUILD_DIR)/stddev $(TEMP_DIR)/$(STAGING_DIR)/stddev
 
 	cd $(TEMP_DIR) && zip -r $(CUR_DIR)/$(STAGING_DIR).zip $(STAGING_DIR)
 
