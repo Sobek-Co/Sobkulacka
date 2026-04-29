@@ -34,11 +34,29 @@ func NewCalculator() *Calculator {
 // ========== SIMPLE MODE ==========
 
 func (c *Calculator) inputDigit(d string) {
+	// Handle decimal point
+	if d == "." {
+		// Don't add decimal if one already exists
+		if strings.Contains(c.display, ".") {
+			return
+		}
+		// If new input, start with "0."
+		if c.newInput {
+			c.display = "0."
+			c.newInput = false
+			return
+		}
+		// Otherwise just append the decimal
+		c.display += d
+		return
+	}
+
+	// Regular digit input
 	if c.newInput {
 		c.display = d
 		c.newInput = false
 	} else {
-		if c.display == "0" {
+		if c.display == "0" && d != "." {
 			c.display = d
 		} else {
 			c.display += d
@@ -782,6 +800,8 @@ func (ui *CalculatorUI) handleKeyEvent(keyval uint, keycode uint, state gdk.Modi
 			ui.handleInput("*")
 		case gdk.KEY_slash:
 			ui.handleInput("/")
+		case gdk.KEY_period:
+			ui.handleInput(".")
 		case gdk.KEY_Return, gdk.KEY_KP_Enter:
 			ui.handleInput("=")
 		case gdk.KEY_BackSpace:
@@ -843,13 +863,17 @@ func (ui *CalculatorUI) handleKeyEvent(keyval uint, keycode uint, state gdk.Modi
 			ui.handleInput("=")
 		case gdk.KEY_BackSpace:
 			ui.calc.deleteFormulaChar()
-		case gdk.KEY_c, gdk.KEY_C:
-			if (state & gdk.ControlMask) != 0 {
-				return false
-			}
-			ui.handleInput("C")
 		case gdk.KEY_Escape:
 			ui.handleInput("C")
+		case gdk.KEY_a, gdk.KEY_A, gdk.KEY_b, gdk.KEY_B, gdk.KEY_c, gdk.KEY_C, gdk.KEY_d, gdk.KEY_D, gdk.KEY_e, gdk.KEY_E, gdk.KEY_f, gdk.KEY_F,
+			gdk.KEY_g, gdk.KEY_G, gdk.KEY_h, gdk.KEY_H, gdk.KEY_i, gdk.KEY_I, gdk.KEY_j, gdk.KEY_J, gdk.KEY_k, gdk.KEY_K,
+			gdk.KEY_l, gdk.KEY_L, gdk.KEY_m, gdk.KEY_M, gdk.KEY_n, gdk.KEY_N, gdk.KEY_o, gdk.KEY_O, gdk.KEY_p, gdk.KEY_P,
+			gdk.KEY_q, gdk.KEY_Q, gdk.KEY_r, gdk.KEY_R, gdk.KEY_s, gdk.KEY_S, gdk.KEY_t, gdk.KEY_T, gdk.KEY_u, gdk.KEY_U,
+			gdk.KEY_v, gdk.KEY_V, gdk.KEY_w, gdk.KEY_W, gdk.KEY_x, gdk.KEY_X, gdk.KEY_y, gdk.KEY_Y, gdk.KEY_z, gdk.KEY_Z:
+			// Allow typing letters for function names (sin, cos, tan, cot, root)
+			// The character will be added to the formula and the tokenizer will recognize function names
+			char := string(rune(keyval))
+			ui.handleInput(char)
 		default:
 			return false
 		}
