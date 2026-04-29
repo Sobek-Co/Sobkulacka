@@ -43,8 +43,8 @@ pack: doc stddev
 
 # installer
 	mkdir $(TEMP_DIR)/$(STAGING_DIR)/install
-	cp ../install.sh $(TEMP_DIR)/$(STAGING_DIR)/install.sh
-	cp $(BUILD_DIR)/stddev $(TEMP_DIR)/$(STAGING_DIR)/stddev
+	cp ../install.sh $(TEMP_DIR)/$(STAGING_DIR)/install/install.sh
+	cp $(BUILD_DIR)/stddev $(TEMP_DIR)/$(STAGING_DIR)/install/stddev
 
 	cd $(TEMP_DIR) && zip -r $(CUR_DIR)/$(STAGING_DIR).zip $(STAGING_DIR)
 
