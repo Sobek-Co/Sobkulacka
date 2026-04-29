@@ -1,4 +1,4 @@
-xpalacj00 100 ()
-xsobekd00 100 ()
-xstovim00 100 ()
-xvitekv00 100 ()
+xpalacj00 100 (GUI, debuggovani, makefile, automaticke testy a sestaveni)
+xsobekd00 100 (testy matematické knihovny, výpočet výběrové směrodatné odchylky, profilování)
+xstovim00 100 (parser, mockup, generovani dokumentace)
+xvitekv00 100 (matematická knihovna, uživatelská příručka)
