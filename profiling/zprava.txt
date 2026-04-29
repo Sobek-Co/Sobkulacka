@@ -1,0 +1,8 @@
+Výsledky profilování
+- byl použit program Perf na Ubuntu virtual machine
+- program je příliš rychlý pro profilování méně než 10 milionů hodnot
+- více než 90% času tráví program parsováním vstupů
+- funkce matematické knihovny zabírají pouze pár procent času běhu programu
+- došli jsme k závěru že naši knihovnu není nutné více optimalizovat
+
+David Sobek

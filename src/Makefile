@@ -55,7 +55,7 @@ pack: doc
 	rm -rf $(TEMP_DIR)
 
 clean:
-	rm -rf $(BUILD_DIR) $(DOC_DIR)
+	rm -rf $(BUILD_DIR) $(DOC_DIR) data.txt perf.data perf.data.old
 
 # ---- Dependencies ----
 
@@ -127,6 +127,23 @@ test: check_install
 		ourmath.c test/test_ourmath.c \
 		$(CHECK_LIBS) -pthread -lrt -lm
 	$(BUILD_DIR)/test_program
+
+# ---- Stddev profiler ----
+
+stddev:
+	mkdir -p $(BUILD_DIR)
+	$(CC) -o $(BUILD_DIR)/stddev \
+		$(CFLAGS) -g -O2 \
+		ourmath.c profiling/stddev.c \
+		$(LIBS)
+
+stddev_test: stddev
+	sudo sysctl kernel.perf_event_paranoid=1
+	awk 'BEGIN{srand(); for(i=0;i<10000000;i++) print rand()*1000}' > data.txt
+	perf record -g $(BUILD_DIR)/stddev < data.txt
+	perf report > ../profiling/perf_result.txt
+	perf report
+	rm -f data.txt perf.data perf.data.old
 
 # ---- Run ----
 
